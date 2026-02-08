@@ -7,6 +7,7 @@ const config: Config = {
   // Tailwind должен знать, где искать классы, которые вы используете.
   // Эта конфигурация указывает на папки `app` и `components`
   // и ищет файлы с расширениями js, ts, jsx, tsx, mdx.
+  darkMode: 'class',
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',

@@ -20,11 +20,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html lang="ru">
+    <html lang="ru" className="light">
       {/* Переменная для Source Serif Pro будет --font-source-serif-pro, как мы и указали в tailwind.config.ts */}
       <body className={`${inter.variable} ${karantina.variable} ${istok.variable} ${sourceSerif.variable} font-sans`}>
         

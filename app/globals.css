@@ -94,18 +94,18 @@ body {
     @apply w-full border-collapse;
 }
 .rdp-head_row, .rdp-row {
-    @apply flex w-full mt-2;
+    @apply grid grid-cols-7 w-full;
 }
 .rdp-head_cell {
-    @apply text-gray-500 rounded-md w-full justify-center font-normal text-sm;
+    @apply text-gray-500 rounded-md w-full justify-center font-normal text-sm p-2;
 }
 .rdp-cell {
-    @apply text-center text-sm p-0 relative rounded-lg w-full;
+    @apply text-center text-sm p-0 m-0 relative rounded-lg w-full;
 }
 
 /* Ключевые стили для самой ячейки/кнопки дня */
 .rdp-day {
-    @apply h-16 w-full p-0 font-normal rounded-lg transition-colors focus:z-10;
+    @apply h-14 w-full p-0 font-normal rounded-lg transition-colors focus:z-10 flex items-center justify-center;
 }
 .rdp-day_today {
     @apply font-extrabold text-blue-600;
@@ -118,9 +118,10 @@ body {
 .rdp-day_selected, .rdp-day_selected:hover {
     @apply bg-gray-800 text-white;
 }
-.rdp-day_range_start, .rdp-day_range_end {
+/* Эти стили переопределяются в компоненте CalendarDayContent */
+/* .rdp-day_range_start, .rdp-day_range_end {
     @apply !bg-gray-800 !text-white;
-}
+} */
 .rdp-day_range_middle {
     @apply bg-gray-100 !rounded-none;
 }

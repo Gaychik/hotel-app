@@ -57,15 +57,20 @@ export default function SmartCalendar() {
             }}
             disabled={{ before: new Date() }} 
             className="w-full"
-            classNames={{
-              // CHANGED: Обновленные классы для лучшего отображения
+            
+           classNames={{
               root: 'w-full',
-              months: 'flex flex-col sm:flex-row w-full justify-center gap-x-8',
-              month: 'space-y-6 w-full',
+              months: 'flex flex-col sm:flex-row w-full justify-center gap-x-16', // Увеличили разрыв между месяцами
+              month: 'w-full', // Убрали лишний space-y-4
               caption: 'flex justify-center items-center relative text-xl font-bold h-12 capitalize',
-              head_row: 'flex justify-around text-gray-500 mb-2',
-              row: 'flex w-full mt-2 justify-around',
-              day: 'w-full', // NEW: Растягиваем ячейку, чтобы компонент внутри занял все место
+              
+              // Создаем grid-сетку, которая заставит ячейки быть большими
+              head_row: 'grid grid-cols-7 mb-1',
+              head_cell: 'text-gray-500 text-sm font-semibold text-center p-2',
+              row: 'grid grid-cols-7', // Каждая неделя - это тоже grid
+              cell: 'p-0', // Убираем все внутренние отступы
+              day: 'w-full h-14 flex items-center justify-center', // Прижимаем ячейки друг к другу и задаем фиксированную высоту
+              day_outside: 'opacity-20 pointer-events-none', // Делаем дни другого месяца некликабельными
             }}
           />
 
@@ -93,7 +98,10 @@ export default function SmartCalendar() {
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t z-20">
             <button
               onClick={() => setShowMobilePanel(true)}
-              className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-blue-700 transition-all"
+             className="
+                w-full bg-black text-white font-bold py-3 px-4 rounded-lg shadow-lg 
+                transition-all duration-300 ease-in-out 
+                transform hover:scale-105 hover:shadow-xl active:scale-95"
             >
               Посмотреть предложения
             </button>

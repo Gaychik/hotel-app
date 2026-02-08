@@ -56,7 +56,7 @@ export default function CalendarDayContent(props: DayContentProps) {
 
  if (!dayData) {
       return (
-          <div className="w-full h-20 rounded-lg m-px bg-gray-50 animate-pulse"></div>
+          <div className="w-full h-full rounded-lg bg-gray-50 animate-pulse"></div>
       );
   }
 
@@ -69,19 +69,27 @@ export default function CalendarDayContent(props: DayContentProps) {
   }
 
   // 2. Стили для выделения
-  const isSelected = activeModifiers.selected;
-  let finalClasses = '';
-  let textClass = 'text-gray-800';
+ const isSelected = activeModifiers.selected;
+  const isRangeStartOrEnd = activeModifiers.start || activeModifiers.end;
 
-  
+  // Базовые стили для "материальности"
+  const baseClasses = `
+    group relative flex flex-col items-center justify-center w-full h-full transition-all duration-300 transform
+  `;
+
+  // Стили для разных состояний
+ let stateClasses = '';
   if (isSelected) {
-    finalClasses = 'bg-black scale-110 z-10'; // Увеличиваем масштаб для акцента
-    textClass = 'text-white';
+    stateClasses = 'bg-black text-white z-20 shadow-lg rounded-lg';
+  } else if (isRangeStartOrEnd) {
+    stateClasses = 'bg-gradient-to-br from-gray-800 to-black text-white z-20 shadow-lg rounded-lg';
   } else {
-    // Применяем Heatmap только для невыбранных дат
-    finalClasses = getPriceHeatmapClass(dayData.price);
+    stateClasses = getPriceHeatmapClass(dayData.price);
     if (props.activeModifiers.disabled || dayData.status === 'busy') {
-        finalClasses = 'bg-gray-100 text-gray-400 line-through';
+      stateClasses = 'bg-gray-100 text-gray-400 line-through opacity-70';
+    } else {
+      // Hover-эффект возвращен и работает
+      stateClasses += ' hover:shadow-lg hover:z-30 cursor-pointer rounded-lg';
     }
   }
 
@@ -89,26 +97,21 @@ export default function CalendarDayContent(props: DayContentProps) {
   return (
     <>
       <div
-        className={`
-            group relative flex items-center justify-center 
-            w-full h-20 rounded-lg m-px /* NEW: m-px вместо margin, чтобы не было щелей */
-            transition-all duration-300 ease-in-out
-            transform /* NEW: Включаем transform для анимаций */
-            
-            /* NEW: Hover-эффект (масштабирование) только для невыбранных дат */
-            ${!isSelected && !props.activeModifiers.disabled ? 'hover:scale-110 hover:z-20' : ''}
-            
-            ${finalClasses} /* Применяем наши вычисленные классы */
-            ${!props.activeModifiers.disabled && 'cursor-pointer'}
-        `}
+        className={`${baseClasses} ${stateClasses}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchEnd}
       >
-        {/* Индикатор доступности (виден, только если дата не выбрана) */}
-        {!isSelected && dayData.status === 'partial' && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-yellow-500"></div>}
 
-        <span className={`text-lg font-semibold ${textClass}`}>{date.getDate()}</span>
+        {/* Индикатор доступности (виден, только если дата не выбрана) */}
+          <div className="relative text-center w-full h-full flex items-center justify-center">
+            {/* Индикатор "мало номеров" */}
+            {!isSelected && dayData.status === 'partial' && <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-yellow-500"></div>}
+            {/* Дата */}
+            <span className="font-medium">{props.date.getDate()}</span>
+        </div>
+
+     
 
         {/* --- NEW: Поповер для ПК --- */}
         <div className="hidden lg:group-hover:block">
