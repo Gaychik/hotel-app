@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 // Вот здесь исправлен импорт: Source_Serif_Pro -> Source_Serif_4
 import { Inter, Karantina, Istok_Web, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
+import NextAuthProvider from "@/providers/NextAuthProvider";
 
 // Настраиваем шрифты с CSS-переменными
 const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-inter" });
@@ -26,7 +27,8 @@ export default function RootLayout({
     <html lang="ru">
       {/* Переменная для Source Serif Pro будет --font-source-serif-pro, как мы и указали в tailwind.config.ts */}
       <body className={`${inter.variable} ${karantina.variable} ${istok.variable} ${sourceSerif.variable} font-sans`}>
-        {children}
+        
+        <NextAuthProvider>{children}</NextAuthProvider>
       </body>
     </html>
   );
