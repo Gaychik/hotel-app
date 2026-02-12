@@ -1,161 +1,114 @@
 // components/BookingForm.tsx
 'use client';
+
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { getRoomById } from '@/lib/data';
-import { Room } from '@/data/rooms';
-import React, { useState, useEffect, useMemo } from 'react';
-import Image from 'next/image';
+import { getRoomById, createBooking } from '@/lib/data'; // Предполагаем, что есть функция createBooking
+import type { Room } from '@/data/rooms';
+import { differenceInCalendarDays, format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 interface BookingFormProps {
-    roomId: string;
-    checkIn: string;
-    checkOut: string;
+  roomId: string;
+  checkIn: string;
+  checkOut: string;
 }
 
 export const BookingForm = ({ roomId, checkIn, checkOut }: BookingFormProps) => {
+    const router = useRouter();
     const [room, setRoom] = useState<Room | null>(null);
-    const [loading, setLoading] = useState(true);
-     const router = useRouter();
-    
-    // Состояния для дополнительных услуг
-    const [addBreakfast, setAddBreakfast] = useState(false);
-    const [addTransfer, setAddTransfer] = useState(false);
-
-
- const handlePayment = () => {
-        // --- В реальном приложении здесь будет:
-        // 1. Сбор всех данных из формы (имя, телефон, доп. услуги).
-        // 2. Отправка запроса на ваш backend API для создания брони.
-        // 3. Обработка ответа от платежной системы.
-        // 4. В случае успеха - получение bookingId от бэкенда.
-        // ---
-
-        // --- Сейчас мы это симулируем: ---
-        alert("Оплата прошла успешно! Генерируем подтверждение...");
-
-        // Генерируем случайный номер брони для примера
-        const fakeBookingId = `HC-${Math.floor(Math.random() * 90000) + 10000}`;
-
-        // Перенаправляем на страницу подтверждения с ID брони
-        router.push(`/booking/success?bookingId=${fakeBookingId}`);
-    }
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const fetchRoom = async () => {
-            const roomData = await getRoomById(roomId);
-            if (roomData) {
-                setRoom(roomData);
+        getRoomById(roomId).then((data: Room | undefined) => {
+            if (data) {
+                setRoom(data);
             }
-            setLoading(false);
-        };
-        fetchRoom();
+            setIsLoading(false);
+        });
     }, [roomId]);
-    
-    // --- Расчеты стоимости ---
-    const totalNights = useMemo(() => {
-        const start = new Date(checkIn);
-        const end = new Date(checkOut);
-        const diffTime = Math.abs(end.getTime() - start.getTime());
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    }, [checkIn, checkOut]);
 
-    const roomTotalPrice = (room?.price ?? 0) * totalNights;
-    const breakfastPrice = addBreakfast ? 1200 * totalNights : 0; // Пример: 1200р/ночь
-    const transferPrice = addTransfer ? 3000 : 0; // Пример: 3000р
-    const finalPrice = roomTotalPrice + breakfastPrice + transferPrice;
+    const { totalNights, totalPrice } = useMemo(() => {
+        if (!room) return { totalNights: 0, totalPrice: 0 };
+        const nights = differenceInCalendarDays(new Date(checkOut), new Date(checkIn));
+        return {
+            totalNights: nights,
+            totalPrice: nights * room.price
+        };
+    }, [checkIn, checkOut, room]);
 
-    if (loading) {
-        return <div className="container mx-auto text-center py-20">Загружаем детали вашего номера...</div>;
+    const handleConfirmAndPay = async () => {
+        if (!room) return;
+        
+        // 1. Имитируем создание бронирования на бэкенде
+        const newBooking = await createBooking({
+            roomId: room.id,
+            checkIn,
+            checkOut,
+            guestName: "Тестовый Пользователь", // В реальности брать из формы
+            totalPrice,
+        });
+
+        // 2. Перенаправляем на страницу успеха с ID нового бронирования
+        router.push(`/booking/success?bookingId=${newBooking.id}`);
+    };
+
+    if (isLoading) {
+        return <div className="text-center py-20">Загружаем детали номера...</div>;
     }
 
     if (!room) {
-        return <div className="container mx-auto text-center py-20">Не удалось найти информацию о номере.</div>;
+        return <div className="text-center py-20">Ошибка: номер не найден.</div>;
     }
 
     return (
-        <div className="container mx-auto px-4 py-12">
-            <h1 className="text-4xl font-bold font-karantina mb-8">Оформление брони</h1>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                {/* --- ЛЕВАЯ КОЛОНКА: ФОРМА --- */}
-                <div className="lg:col-span-2 space-y-12">
-                    {/* Шаг 2: Данные гостя */}
-                    <section>
-                        <h2 className="text-2xl font-bold font-istok-web mb-4">Данные гостя</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <input type="text" placeholder="Имя и фамилия" className="p-3 border rounded-md" />
-                            <input type="tel" placeholder="Номер телефона" className="p-3 border rounded-md" />
-                            <input type="email" placeholder="Email" className="p-3 border rounded-md md:col-span-2" />
-                            <textarea placeholder="Комментарии и пожелания" className="p-3 border rounded-md md:col-span-2" rows={4}></textarea>
-                        </div>
-                    </section>
-
-                    {/* Шаг 3: Доп. услуги */}
-                    <section>
-                         <h2 className="text-2xl font-bold font-istok-web mb-4">Дополнительные услуги</h2>
-                         <div className="space-y-4">
-                            <label className="flex items-center justify-between p-4 border rounded-md cursor-pointer">
-                                <div>
-                                    <h3 className="font-semibold">Завтрак в номер</h3>
-                                    <p className="text-sm text-gray-600">1200 ₽ / ночь</p>
-                                </div>
-                                <input type="checkbox" checked={addBreakfast} onChange={() => setAddBreakfast(!addBreakfast)} className="h-5 w-5 rounded"/>
-                            </label>
-                             <label className="flex items-center justify-between p-4 border rounded-md cursor-pointer">
-                                <div>
-                                    <h3 className="font-semibold">Трансфер из аэропорта</h3>
-                                    <p className="text-sm text-gray-600">3000 ₽</p>
-                                </div>
-                                <input type="checkbox" checked={addTransfer} onChange={() => setAddTransfer(!addTransfer)} className="h-5 w-5 rounded"/>
-                            </label>
-                         </div>
-                    </section>
-                    
-                    {/* Шаг 4: Оплата */}
-                    <section>
-                        <h2 className="text-2xl font-bold font-istok-web mb-4">Оплата</h2>
-                        <div className="p-4 border rounded-md bg-gray-50">
-                            {/* Здесь будет виджет оплаты, пока просто заглушка */}
-                            <p className="font-semibold">Выберите способ оплаты</p>
-                            <div className="flex gap-4 mt-2"><span>СБП</span> <span>Карта</span></div>
-                            <label className="flex items-center mt-6">
-                                <input type="checkbox" className="h-4 w-4 rounded mr-2" />
-                                <span className="text-sm">Я согласен с <a href="#" className="underline">условиями бронирования</a></span>
-                            </label>
-                             <button 
-                                onClick={handlePayment}
-                                className="w-full mt-4 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700">
-                                Оплатить {finalPrice.toLocaleString()} ₽
-                            </button>
-                        </div>
-                    </section>
-                </div>
-
-                {/* --- ПРАВАЯ КОЛОНКА: ИТОГО --- */}
-                <div className="lg:sticky top-24 h-fit">
-                    <div className="border rounded-lg p-6">
-                        {/* Шаг 1: Подтверждение */}
-                        <div className="flex items-center pb-4 border-b">
-                            <Image src={room.images[0]} alt={room.name} width={100} height={80} className="rounded-md object-cover"/>
-                            <div className="ml-4">
-                                <p className="text-sm text-gray-600">Ваш выбор</p>
-                                <h3 className="font-semibold">{room.name}</h3>
-                            </div>
-                        </div>
-                        <div className="py-4 border-b space-y-2">
-                             <div className="flex justify-between"><span>Заезд:</span><span className="font-semibold">{new Date(checkIn).toLocaleDateString()}</span></div>
-                             <div className="flex justify-between"><span>Выезд:</span><span className="font-semibold">{new Date(checkOut).toLocaleDateString()}</span></div>
-                        </div>
-                        <div className="py-4 border-b space-y-2">
-                             <div className="flex justify-between"><span>{room.price.toLocaleString()} ₽ x {totalNights} ночей</span><span>{roomTotalPrice.toLocaleString()} ₽</span></div>
-                             {addBreakfast && <div className="flex justify-between"><span>Завтрак</span><span>{breakfastPrice.toLocaleString()} ₽</span></div>}
-                             {addTransfer && <div className="flex justify-between"><span>Трансфер</span><span>{transferPrice.toLocaleString()} ₽</span></div>}
-                        </div>
-                        <div className="py-4">
-                             <div className="flex justify-between text-xl font-bold"><span>Итого:</span><span>{finalPrice.toLocaleString()} ₽</span></div>
+        <main className="container mx-auto py-12 px-4">
+            <h1 className="text-3xl font-bold font-karantina mb-8 text-center">Подтверждение бронирования</h1>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Левая колонка: Детали */}
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="p-6 bg-white rounded-lg shadow">
+                        <h2 className="text-xl font-bold mb-4">Детали вашей поездки</h2>
+                        <div className="space-y-2">
+                           <p><strong>Номер:</strong> {room.name}</p>
+                           <p><strong>Заезд:</strong> {format(new Date(checkIn), 'd MMMM yyyy', { locale: ru })}</p>
+                           <p><strong>Выезд:</strong> {format(new Date(checkOut), 'd MMMM yyyy', { locale: ru })}</p>
+                           <p><strong>Продолжительность:</strong> {totalNights} ночей</p>
                         </div>
                     </div>
+
+                    <div className="p-6 bg-white rounded-lg shadow">
+                        <h2 className="text-xl font-bold mb-4">Информация о госте</h2>
+                        {/* Здесь будет полноценная форма */}
+                        <p className="text-gray-500">Раздел для ввода имени, фамилии, email и других данных гостя.</p>
+                    </div>
+                </div>
+
+                {/* Правая колонка: Итог и оплата */}
+                <div className="p-6 bg-white rounded-lg shadow h-fit sticky top-24">
+                     <h2 className="text-xl font-bold mb-4">Итог</h2>
+                     <div className="space-y-2">
+                        <p className="flex justify-between">
+                            <span>{room.price.toLocaleString('ru-RU')}₽ x {totalNights} ночей</span> 
+                            <span>{totalPrice.toLocaleString('ru-RU')} ₽</span>
+                        </p>
+                        {/* Здесь могут быть налоги и сборы */}
+                        <p className="flex justify-between text-sm text-gray-500">
+                            <span>Налоги и сборы</span> 
+                            <span>Включены</span>
+                        </p>
+                     </div>
+                     <hr className="my-4" />
+                     <p className="flex justify-between font-bold text-lg">
+                        <span>К оплате</span> 
+                        <span>{totalPrice.toLocaleString('ru-RU')} ₽</span>
+                     </p>
+                     <button onClick={handleConfirmAndPay} className="mt-6 w-full bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-colors">
+                        Подтвердить и оплатить
+                     </button>
                 </div>
             </div>
-        </div>
+        </main>
     );
 };

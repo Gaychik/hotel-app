@@ -3,13 +3,13 @@
 
 import React, { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getBookingById } from '@/lib/data';
 import Link from 'next/link';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
+import { getBookingById } from '@/lib/data';
 
-// Тип для нашего объекта бронирования
 type Booking = Awaited<ReturnType<typeof getBookingById>>;
 
-// Компонент, отображающий детали
 const ConfirmationDetails = () => {
     const searchParams = useSearchParams();
     const bookingId = searchParams.get('bookingId');
@@ -24,7 +24,6 @@ const ConfirmationDetails = () => {
     if (!bookingId) {
         return <div className="text-center"><h1 className="font-bold text-xl">Ошибка: ID бронирования не найден.</h1></div>;
     }
-
     if (!booking) {
         return <div className="text-center">Загружаем детали вашего бронирования...</div>;
     }
@@ -48,36 +47,33 @@ const ConfirmationDetails = () => {
             
             {/* Краткая сводка */}
             <div className="mt-6 text-left border-t pt-6 space-y-3">
-                 <h3 className="font-bold text-lg text-center mb-4">Детали поездки</h3>
-                 <div className="flex justify-between">
+                <h3 className="font-bold text-lg text-center mb-4">Детали поездки</h3>
+                <div className="flex justify-between">
                     <span className="text-gray-600">Номер:</span>
                     <span className="font-semibold">{booking.room.name}</span>
-                 </div>
-                 <div className="flex justify-between">
+                </div>
+                <div className="flex justify-between">
                     <span className="text-gray-600">Даты:</span>
-                    <span className="font-semibold">{new Date(booking.checkIn).toLocaleDateString()} - {new Date(booking.checkOut).toLocaleDateString()}</span>
-                 </div>
-                 <div className="flex justify-between">
+                    <span className="font-semibold">{format(new Date(booking.checkIn), 'd MMM')} - {format(new Date(booking.checkOut), 'd MMM yyyy', { locale: ru })}</span>
+                </div>
+                <div className="flex justify-between">
                     <span className="text-gray-600">Итоговая стоимость:</span>
-                    <span className="font-semibold">{booking.totalPrice.toLocaleString()} ₽</span>
-                 </div>
+                    <span className="font-semibold">{booking.totalPrice.toLocaleString('ru-RU')} ₽</span>
+                </div>
             </div>
 
             {/* Кнопки действий */}
-            <div className="mt-8 grid grid-cols-2 gap-4">
-                <button onClick={() => alert('Загрузка чека...')} className="bg-gray-200 hover:bg-gray-300 font-semibold py-3 rounded-lg">Скачать чек</button>
-                <button onClick={() => alert('Добавление в календарь...')} className="bg-gray-200 hover:bg-gray-300 font-semibold py-3 rounded-lg">В календарь</button>
-                <button onClick={() => alert('Связь с отелем...')} className="bg-gray-200 hover:bg-gray-300 font-semibold py-3 rounded-lg">Связаться</button>
-                <Link href="/profile" className="bg-blue-600 text-white hover:bg-blue-700 font-semibold py-3 rounded-lg flex items-center justify-center">
-                    В личный кабинет
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Link href="/profile" className="md:col-span-2 w-full bg-black text-white font-semibold py-3 rounded-lg flex items-center justify-center transition-colors hover:bg-gray-800">
+                    Перейти в личный кабинет
                 </Link>
+                <button onClick={() => alert('Загрузка чека...')} className="bg-gray-100 hover:bg-gray-200 font-semibold py-3 rounded-lg transition-colors">Скачать чек</button>
+                <button onClick={() => alert('Связь с отелем...')} className="bg-gray-100 hover:bg-gray-200 font-semibold py-3 rounded-lg transition-colors">Связаться</button>
             </div>
         </div>
     );
 };
 
-
-// Основной компонент страницы
 const SuccessPage = () => {
     return (
         <div className="container mx-auto px-4 py-12 md:py-20">

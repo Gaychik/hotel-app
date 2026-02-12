@@ -46,8 +46,8 @@ const Header: React.FC = () => {
                 {/* --- Правая колонка (Иконки для десктопа) --- */}
                 <div className="justify-self-end">
                     <div className="hidden lg:flex items-center space-x-6">
-                        <button className="transition-transform hover:scale-110"><HeartIcon /></button>
-                        <button className="transition-transform hover:scale-110"><CalendarIcon className="w-6 h-6" /></button>
+                        {/* <button className="transition-transform hover:scale-110"><HeartIcon /></button> */}
+                        {/* <button className="transition-transform hover:scale-110"><CalendarIcon className="w-6 h-6" /></button> */}
                         
                         {/* 👇 4. "Умная" ссылка на профиль */}
                         <Link href={isLoggedIn ? "/profile" : "/login"} className="cursor-pointer transition-transform hover:scale-110">

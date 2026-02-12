@@ -4,6 +4,7 @@ import { roomsData, Room } from '@/data/rooms';
 import type { Booking, Profile } from '@/types';
 import { DayData } from '@/types';
 import { startOfMonth, endOfMonth, eachDayOfInterval, format } from 'date-fns';
+import { v4 as uuidv4 } from 'uuid';
 // Функция для получения ВСЕХ номеров
 // (будет заменена на fetch('/api/rooms'))
 export const getAllRooms = async (): Promise<Room[]> => {
@@ -13,7 +14,7 @@ export const getAllRooms = async (): Promise<Room[]> => {
 };
 
 // Функция для получения ОДНОГО номера по ID
-// (будет заменена на fetch(`/api/rooms/${id}`))
+// (будет заменена на fetch(/api/rooms/\))
 export const getRoomById = async (id: string): Promise<Room | undefined> => {
   // Имитируем задержку сети
 
@@ -21,21 +22,69 @@ export const getRoomById = async (id: string): Promise<Room | undefined> => {
   return room;
 };
 
+
+
+// Определяем, какие данные нам нужны для создания брони
+interface CreateBookingPayload {
+    roomId: string;
+    checkIn: string;
+    checkOut: string;
+    guestName: string;
+    totalPrice: number;
+}
+
+export const createBooking = async (payload: CreateBookingPayload) => {
+    console.log("Создание бронирования с данными:", payload);
+    
+    // Имитируем задержку сети
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Находим номер, который бронируют, чтобы добавить его в ответ
+    const room = await getRoomById(payload.roomId);
+    if (!room) {
+        throw new Error("Room not found for booking creation");
+    }
+
+    // В реальном приложении здесь будет INSERT-запрос в вашу базу данных.
+    // Мы же просто создаем объект бронирования.
+
+    const newBooking = {
+        id: `HC-${uuidv4().slice(0, 8).toUpperCase()}`, // Генерируем уникальный ID брони
+        room: room,
+        checkIn: payload.checkIn,
+        checkOut: payload.checkOut,
+        guestName: payload.guestName,
+        totalPrice: payload.totalPrice,
+        status: 'active' as 'active' // Приводим тип
+    };
+
+    console.log("Новое бронирование создано:", newBooking);
+
+    // В реальном приложении мы могли бы также обновить
+    // `room.availability.bookedDates` для этого номера,
+    // но для имитации это не обязательно.
+    
+    // Возвращаем созданное бронирование, чтобы на странице успеха мы могли его показать.
+    return newBooking;
+};
+
+
+
 export const getBookingById = async (bookingId: string) => {
   // Имитируем задержку сети
   await new Promise(resolve => setTimeout(resolve, 100));
 
-  // Возвращаем "фейковые" данные, как будто получили их с сервера.
+  // Возвращаем 'фейковые' данные, как будто получили их с сервера.
   // Для примера используем первый номер из нашего списка.
   const room = roomsData[0]; 
   
   return {
     id: bookingId,
     room: room,
-    checkIn: "2026-10-15", // Пример даты
-    checkOut: "2026-10-20", // Пример даты
+    checkIn: '2026-10-15', // Пример даты
+    checkOut: '2026-10-20', // Пример даты
     totalPrice: 68500, // Пример цены
-    guestName: "Роман Гайчиков" // Пример имени
+    guestName: 'Роман Гайчиков' // Пример имени
   };
 };
 
@@ -49,9 +98,9 @@ export const getBookingById = async (bookingId: string) => {
 export const getProfileData = async () : Promise<Profile> => {
     await new Promise(resolve => setTimeout(resolve, 200)); // Имитация сети
     return {
-        name: "Роман Гайчиков",
-        email: "roman.g@example.com",
-        phone: "+7 (999) 123-45-67"
+        name: 'Роман Гайчиков',
+        email: 'roman.g@example.com',
+        phone: '+7 (999) 123-45-67'
     };
 };
 
@@ -98,14 +147,14 @@ export const getPastBookings = async (): Promise<Booking[]> => {
 
 // export const getRoomById = async (id: string): Promise<Room | undefined> => {
 //   try {
-//     const response = await fetch(`https://your-api.com/api/rooms/${id}`);
+//     const response = await fetch(\https://your-api.com/api/rooms/\\);
 //     if (!response.ok) {
 //         return undefined; // или обработать ошибку
 //     }
 //     const room: Room = await response.json();
 //     return room;
 //   } catch (error) {
-//     console.error("Failed to fetch room:", error);
+//     console.error('Failed to fetch room:', error);
 //     return undefined;
 //   }
 // };
@@ -115,8 +164,7 @@ export const getPastBookings = async (): Promise<Booking[]> => {
 
 
 // ...
-
-// В будущем: fetch(`/api/calendar-data?month=${...}`)
+// В будущем: fetch(\/api/calendar-data?month=\\)
 export const getCalendarDataForMonth = async (month: Date): Promise<DayData[]> => {
     await new Promise(resolve => setTimeout(resolve, 150));
     
@@ -124,19 +172,19 @@ export const getCalendarDataForMonth = async (month: Date): Promise<DayData[]> =
     const endDate = endOfMonth(month);
     const daysInMonth = eachDayOfInterval({ start: startDate, end: endDate });
 
-    // Генерируем "фейковые" данные для каждого дня
+    // Генерируем 'фейковые' данные для каждого дня
     return daysInMonth.map(day => {
         const dayOfMonth = day.getDate();
         let price = 12000;
         let availability: DayData['availability'] = 'free';
 
         // Имитируем логику ценообразования и доступности
-        if (dayOfMonth > 10 && dayOfMonth < 15) { // "Занятые" даты
+        if (dayOfMonth > 10 && dayOfMonth < 15) { // 'Занятые' даты
             price = 0;
             availability = 'busy';
         } else if (dayOfMonth % 7 === 0 || dayOfMonth % 7 === 1) { // Выходные дороже
             price = 18000;
-        } else if (dayOfMonth > 20 && dayOfMonth < 25) { // "Частично занято"
+        } else if (dayOfMonth > 20 && dayOfMonth < 25) { // 'Частично занято'
             price = 15000;
             availability = 'partial';
         }
@@ -148,3 +196,60 @@ export const getCalendarDataForMonth = async (month: Date): Promise<DayData[]> =
         };
     });
 };
+
+// В будущем: fetch(\/api/rooms/available?checkIn=\&checkOut=\\)
+export const getAvailableRoomsByDates = async (checkIn: string, checkOut: string): Promise<Room[]> => {
+  // Имитируем задержку сети
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  // Получаем все номера
+  const allRooms = await getAllRooms();
+  
+  // Преобразуем даты для сравнения
+  const startDate = new Date(checkIn);
+  const endDate = new Date(checkOut);
+  
+  // Фильтруем доступные номера
+  const availableRooms = allRooms.filter(room => {
+    // Проверяем, есть ли у номера информация о доступности
+    if (!room.availability || !room.availability.bookedDates) {
+      return true; // Если нет информации о бронировании, считаем номер доступным
+    }
+    
+    // Проверяем, не пересекается ли запрашиваемый период с забронированными датами
+    for (const bookedPeriod of room.availability.bookedDates!) {
+      const bookedStart = new Date(bookedPeriod.start);
+      const bookedEnd = new Date(bookedPeriod.end);
+      
+      // Пересечение периодов: (начало1 < конец2) && (конец1 > начало2)
+      if (startDate < bookedEnd && endDate > bookedStart) {
+        return false; // Номер занят в запрашиваемый период
+      }
+    }
+    
+    return true; // Номер доступен
+  });
+  
+  return availableRooms;
+};
+
+// Пример будущего кода для подключения к API
+// В будущем он будет выглядеть так:
+
+// ts
+// // lib/data.ts - В БУДУЩЕМ
+// import { Room } from '@/data/rooms'; // Интерфейс можно оставить
+
+// export const getAvailableRoomsByDates = async (checkIn: string, checkOut: string): Promise<Room[]> => {
+//   try {
+//     const response = await fetch(\https://your-api.com/api/rooms/available?checkIn=\&checkOut=\\);
+//     if (!response.ok) {
+//         throw new Error(\HTTP error! status: \\);
+//     }
+//     const rooms: Room[] = await response.json();
+//     return rooms;
+//   } catch (error) {
+//     console.error('Failed to fetch available rooms:', error);
+//     throw error;
+//   }
+// };

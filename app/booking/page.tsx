@@ -4,7 +4,7 @@
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { BookingForm } from '@/components/BookingForm'; // Мы создадим этот компонент ниже
-
+import { BackButton } from '@/components/ui/BackButton'; 
 // Обертка для получения searchParams, т.к. их нужно "читать" в Suspense
 const BookingPageContent = () => {
     const searchParams = useSearchParams();
@@ -30,9 +30,12 @@ const BookingPageContent = () => {
 const BookingPage = () => {
   return (
     // Suspense необходим для работы useSearchParams в App Router
-    <Suspense fallback={<div className="container mx-auto text-center py-20">Загрузка данных о бронировании...</div>}>
-      <BookingPageContent />
-    </Suspense>
+   <div className="relative">
+        <BackButton />
+        <Suspense fallback={<div className="container mx-auto text-center py-20">Загрузка данных о бронировании...</div>}>
+            <BookingPageContent />
+        </Suspense>
+    </div>
   );
 };
 
