@@ -8,16 +8,24 @@ import type { Room } from '@/data/rooms';
 import { differenceInCalendarDays, format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
+import { updateBooking } from '@/lib/data';
+
 interface BookingFormProps {
   roomId: string;
   checkIn: string;
   checkOut: string;
+  summaryPrice: number;
+  currentBookingId?: string;
+  mode?: 'new' | 'change';
 }
 
-export const BookingForm = ({ roomId, checkIn, checkOut }: BookingFormProps) => {
+
+export const BookingForm = ({ roomId, checkIn, checkOut,  currentBookingId, mode = 'new' }: BookingFormProps) => {
     const router = useRouter();
     const [room, setRoom] = useState<Room | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isError, setIsError] = useState(false);
 
     useEffect(() => {
         getRoomById(roomId).then((data: Room | undefined) => {
@@ -37,21 +45,55 @@ export const BookingForm = ({ roomId, checkIn, checkOut }: BookingFormProps) => 
         };
     }, [checkIn, checkOut, room]);
 
-    const handleConfirmAndPay = async () => {
-        if (!room) return;
-        
-        // 1. Имитируем создание бронирования на бэкенде
-        const newBooking = await createBooking({
-            roomId: room.id,
-            checkIn,
-            checkOut,
-            guestName: "Тестовый Пользователь", // В реальности брать из формы
-            totalPrice,
-        });
-
-        // 2. Перенаправляем на страницу успеха с ID нового бронирования
-        router.push(`/booking/success?bookingId=${newBooking.id}`);
-    };
+       const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  
+  try {
+    if (!room) {
+      setIsError(true);
+      return;
+    }
+    
+    if (mode === 'change' && currentBookingId) {
+      // Логика изменения бронирования
+      const result = await updateBooking(
+        currentBookingId,
+        checkIn,
+        checkOut
+      );
+      
+      if (result && currentBookingId) {
+        // Перенаправление на страницу успеха с информацией об изменении
+        router.push(`/booking/success?type=change&bookingId=${currentBookingId}`);
+      } else {
+        setIsError(true);
+      }
+    } else {
+      // Существующая логика создания бронирования
+      const payload = {
+        roomId: room.id,
+        checkIn: checkIn,
+        checkOut: checkOut,
+        guestName: "Тестовый Пользователь",
+        totalPrice: totalPrice
+      };
+      
+      const result = await createBooking(payload);
+      
+      if (result) {
+        router.push(`/booking/success?bookingId=${result.id}`);
+      } else {
+        setIsError(true);
+      }
+    }
+  } catch (error) {
+    setIsError(true);
+    console.error(error);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
     if (isLoading) {
         return <div className="text-center py-20">Загружаем детали номера...</div>;
@@ -104,7 +146,7 @@ export const BookingForm = ({ roomId, checkIn, checkOut }: BookingFormProps) => 
                         <span>К оплате</span> 
                         <span>{totalPrice.toLocaleString('ru-RU')} ₽</span>
                      </p>
-                     <button onClick={handleConfirmAndPay} className="mt-6 w-full bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-colors">
+                     <button onClick={handleSubmit} className="mt-6 w-full bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-colors">
                         Подтвердить и оплатить
                      </button>
                 </div>

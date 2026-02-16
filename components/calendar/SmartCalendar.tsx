@@ -1,4 +1,4 @@
-// components/calendar/SmartCalendar.tsx
+﻿// components/calendar/SmartCalendar.tsx
 
 'use client';
 
@@ -11,7 +11,7 @@ import CalendarDayContent from '@/components/calendar/CalendarDayContent';
 import BookingDetailsPanel from '@/components/calendar/BookingDetailPanel';
 import { XMarkIcon } from '@heroicons/react/24/solid';
 import { format, parseISO, isValid } from 'date-fns'; 
-import { BackButton } from '../ui/BackButton';
+import { BackButton } from '@/components/ui/BackButton';
 
 
 const useIsDesktop = () => {
@@ -31,6 +31,7 @@ export default function SmartCalendar() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
+
   const [bookingMode, setBookingMode] = useState(false);
   const [bookingRoomId, setBookingRoomId] = useState<string | null>(null);
   const [range, setRange] = useState<DateRange | undefined>();
@@ -57,7 +58,8 @@ export default function SmartCalendar() {
   useEffect(() => {
     const mode = searchParams.get('mode');
     const roomId = searchParams.get('roomId');
-    if (mode === 'booking' && roomId) {
+    const currentBookingId = searchParams.get('currentBookingId');
+    if (mode === 'booking' && (roomId || currentBookingId)) {
       setBookingMode(true);
       setBookingRoomId(roomId);
     } else {
@@ -94,16 +96,30 @@ const handleDateSelect = (selectedRange: DateRange | undefined) => {
 
 
   
-  const handleConfirmBooking = () => {
-    if (!range?.from || !range?.to || !bookingRoomId) return;
-
+ const handleConfirmBooking = () => {
+  if (!range?.from || !range?.to || (!bookingRoomId && !searchParams.get('currentBookingId'))) return;
+  
+  const currentBookingId = searchParams.get('currentBookingId');
+  
+  if (currentBookingId) {
+    // Это изменение существующего бронирования
     const queryParams = new URLSearchParams({
-      roomId: bookingRoomId,
-      checkIn: format(range.from, 'yyyy-MM-dd'),
-      checkOut: format(range.to, 'yyyy-MM-dd'),
+      currentBookingId: currentBookingId,
+      roomId: bookingRoomId || searchParams.get('roomId') || '',
+      checkIn: format(range.from, 'yyyy-MM-dd') || '',
+      checkOut: format(range.to, 'yyyy-MM-dd') || '',
+    });
+    router.push(`/booking/change?${queryParams.toString()}`);
+  } else {
+    // Это создание нового бронирования (обычная логика)
+    const queryParams = new URLSearchParams({
+      roomId: bookingRoomId || searchParams.get('roomId') || '',
+      checkIn: format(range.from, 'yyyy-MM-dd') || '',
+      checkOut: format(range.to, 'yyyy-MM-dd') || '',
     });
     router.push(`/booking?${queryParams.toString()}`);
-  };
+  }
+};
   
   const isRangeSelected = range?.from && range?.to;
 
@@ -115,7 +131,7 @@ const handleDateSelect = (selectedRange: DateRange | undefined) => {
       {/* CHANGED: Обертка для увеличения календаря на ПК */}
       <div className="flex-grow lg:max-w-4xl lg:mx-auto">
          <h1 className="text-3xl font-bold mb-4 font-karantina text-center lg:text-left">
-          {bookingMode ? `Выберите даты для номера` : 'Выберите даты вашего отдыха'}
+          {bookingMode && searchParams.get('currentBookingId') ? 'Измените даты бронирования' : bookingMode ? 'Выберите даты для номера' : 'Выберите даты вашего отдыха'}
         </h1>
         <div className="bg-white p-4 rounded-lg shadow-lg">
           <DayPicker
@@ -134,21 +150,21 @@ const handleDateSelect = (selectedRange: DateRange | undefined) => {
             
            classNames={{
               root: 'w-full',
-              months: 'flex flex-col sm:flex-row w-full justify-center gap-x-16', // Увеличили разрыв между месяцами
-              month: 'w-full', // Убрали лишний space-y-4
+              months: 'flex flex-col sm:flex-row w-full justify-center gap-x-16', // РЈРІРµР»РёС‡РёР»Рё СЂР°Р·СЂС‹РІ РјРµР¶РґСѓ РјРµСЃСЏС†Р°РјРё
+              month: 'w-full', // РЈР±СЂР°Р»Рё Р»РёС€РЅРёР№ space-y-4
               caption: 'flex justify-center items-center relative text-xl font-bold h-12 capitalize',
               
               // Создаем grid-сетку, которая заставит ячейки быть большими
               head_row: 'grid grid-cols-7 mb-1',
               head_cell: 'text-gray-500 text-sm font-semibold text-center p-2',
-              row: 'grid grid-cols-7', // Каждая неделя - это тоже grid
+              row: 'grid grid-cols-7', // РљР°Р¶РґР°СЏ РЅРµРґРµР»СЏ - СЌС‚Рѕ С‚РѕР¶Рµ grid
               cell: 'p-0', // Убираем все внутренние отступы
-              day: 'w-full h-14 flex items-center justify-center', // Прижимаем ячейки друг к другу и задаем фиксированную высоту
+              day: 'w-full h-14 flex items-center justify-center', // РџСЂРёР¶РёРјР°РµРј СЏС‡РµР№РєРё РґСЂСѓРі Рє РґСЂСѓРіСѓ Рё Р·Р°РґР°РµРј С„РёРєСЃРёСЂРѕРІР°РЅРЅСѓСЋ РІС‹СЃРѕС‚Сѓ
               day_outside: 'opacity-20 pointer-events-none', // Делаем дни другого месяца некликабельными
             }}
           />
 
-              {/* --- NEW: Легенда для Heatmap --- */}
+              {/* --- NEW: Р›РµРіРµРЅРґР° РґР»СЏ Heatmap --- */}
               <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                     <span>Дешевле</span>
@@ -166,18 +182,18 @@ const handleDateSelect = (selectedRange: DateRange | undefined) => {
            </div>
             
        {/* --- Панель с предложениями (ПК) --- */}
-      {!bookingMode && isDesktop && (
+      { !searchParams.has('currentBookingId') && !bookingMode && isDesktop && (
         <div className="w-full lg:w-1/3 mt-8 lg:mt-0">
           <BookingDetailsPanel selectedRange={range} />
         </div>
       )}
 
 
-        {/* --- Кнопка для мобильной версии --- */}
+        {/* --- РљРЅРѕРїРєР° РґР»СЏ РјРѕР±РёР»СЊРЅРѕР№ РІРµСЂСЃРёРё --- */}
        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t z-20">
         <div className="max-w-4xl mx-auto">
           {/* Если режим бронирования и выбраны даты -> кнопка "Подтвердить" */}
-          {bookingMode && isRangeSelected && (
+          {(searchParams.has('currentBookingId') || bookingMode) && isRangeSelected && (
             <button onClick={handleConfirmBooking} className="w-full bg-black text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95">
               Подтвердить даты
             </button>

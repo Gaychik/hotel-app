@@ -139,6 +139,51 @@ export const getPastBookings = async (): Promise<Booking[]> => {
     ];
 };
 
+// Функция для отмены бронирования
+export const cancelBooking = async (bookingId: string): Promise<Booking | null> => {
+    await new Promise(resolve => setTimeout(resolve, 200)); // Имитация задержки
+    
+    // В реальном приложении здесь будет API вызов для отмены бронирования
+    // Пока что просто возвращаем обновленное бронирование с новым статусом
+    const allBookings = [...await getCurrentBookings(), ...await getPastBookings()];
+    const bookingToCancel = allBookings.find(booking => booking.id === bookingId);
+    
+    if (!bookingToCancel) {
+        return null;
+    }
+    
+    // Обновляем статус бронирования
+    const updatedBooking = {
+        ...bookingToCancel,
+        status: 'cancelled'
+    };
+    
+    return updatedBooking as Booking;
+};
+
+// Функция для обновления бронирования (изменения дат)
+export const updateBooking = async (bookingId: string, newCheckIn: string, newCheckOut: string): Promise<Booking | null> => {
+    await new Promise(resolve => setTimeout(resolve, 300)); // Имитация задержки
+    
+    // В реальном приложении здесь будет API вызов для обновления бронирования
+    // Пока что просто возвращаем обновленное бронирование с новыми датами
+    const allBookings = [...await getCurrentBookings(), ...await getPastBookings()];
+    const bookingToUpdate = allBookings.find(booking => booking.id === bookingId);
+    
+    if (!bookingToUpdate) {
+        return null;
+    }
+    
+    // Обновляем даты бронирования
+    const updatedBooking = {
+        ...bookingToUpdate,
+        checkIn: newCheckIn,
+        checkOut: newCheckOut
+    };
+    
+    return updatedBooking as Booking;
+};
+
 // В будущем он будет выглядеть так:
 
 // ts

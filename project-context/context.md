@@ -81,6 +81,7 @@
 │   │   ├── HistoryBookingCard.tsx
 │   │   └── ProfileSettings.tsx
 │   ├── ui/
+            BackButton.tsx# Кнопка назад в виде стрелочки
 │   │   ├── BookingWidget.tsx # Booking widget
 │   │   ├── HeroSearchWidget.tsx
 │   │   ├── Icons.tsx         # SVG icons
