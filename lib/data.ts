@@ -1,10 +1,12 @@
 // lib/data.ts
 
-import { roomsData, Room } from '@/data/rooms';
+import { roomsData} from '@/data/rooms';
 import type { Booking, Profile } from '@/types';
 import { DayData } from '@/types';
 import { startOfMonth, endOfMonth, eachDayOfInterval, format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
+import type { Room } from '@/types';
+
 // Функция для получения ВСЕХ номеров
 // (будет заменена на fetch('/api/rooms'))
 export const getAllRooms = async (): Promise<Room[]> => {
@@ -68,6 +70,35 @@ export const createBooking = async (payload: CreateBookingPayload) => {
     return newBooking;
 };
 
+// ✅ НОВАЯ АСИНХРОННАЯ ФУНКЦИЯ
+/**
+ * Получает список номеров, имитируя запрос к API.
+ * В будущем здесь будет fetch-запрос.
+ * @param requiredCapacity - Опциональный параметр для фильтрации по вместимости.
+ */
+export const getRooms = async (requiredCapacity: number = 0): Promise<Room[]> => {
+  console.log(`Запрашиваем номера с вместимостью >= ${requiredCapacity}...`);
+
+  // Имитация задержки сети
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  // --- В БУДУЩЕМ ЗДЕСЬ БУДЕТ ВАШ FETCH ---
+  // const response = await fetch(`https://api.hotel-california.com/v1/rooms?capacity_gte=${requiredCapacity}`);
+  // if (!response.ok) {
+  //   throw new Error('Failed to fetch rooms');
+  // }
+  // const data = await response.json();
+  // return data;
+  // -----------------------------------------
+
+  // --- А СЕЙЧАС - МОКОВАЯ ЛОГИКА ---
+  if (requiredCapacity > 0) {
+    const filteredRooms = roomsData.filter(room => room.capacity >= requiredCapacity);
+    return filteredRooms;
+  }
+  
+  return roomsData;
+};
 
 
 export const getBookingById = async (bookingId: string) => {

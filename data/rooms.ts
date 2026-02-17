@@ -1,33 +1,7 @@
 // data/rooms.ts
 
-export interface Room {
-  id: string;
-  name: string;
-  description: string;
-  images: string[];
-  amenities: string[];
-  price: number;
-  // НОВОЕ ПОЛЕ
-  policies: {
-    checkIn: string;
-    checkOut: string;
-    cancellation: string;
-    pets: string;
-  };
-  // Добавляем поля для отслеживания доступности по датам
-  availability?: {
-    // Массив забронированных периодов
-    bookedDates?: {
-      start: string; // формат 'YYYY-MM-DD'
-      end: string;   // формат 'YYYY-MM-DD'
-    }[];
-    // Массив частично забронированных периодов (например, когда частично забронированы удобства)
-    partialDates?: {
-      start: string; // формат 'YYYY-MM-DD'
-      end: string;   // формат 'YYYY-MM-DD'
-    }[];
-  };
-}
+import { Room } from "@/types";
+
 
 export const roomsData: Room[] = [
   {
@@ -46,6 +20,7 @@ export const roomsData: Room[] = [
       cancellation: 'Бесплатная отмена за 48 часов до заезда',
       pets: 'Проживание с животными запрещено'
     },
+    capacity: 2,
     // Добавляем информацию о доступности
     availability: {
       bookedDates: [
@@ -64,6 +39,7 @@ export const roomsData: Room[] = [
     images: ['/images/deluxe-1.avif'],
     amenities: ['Wi-Fi', 'Кондиционер', 'Сейф'],
     price: 7800,
+     capacity: 2,
     policies: {
       checkIn: 'После 14:00',
       checkOut: 'До 12:00',
@@ -85,6 +61,7 @@ export const roomsData: Room[] = [
     images: ['/images/deluxe-1.avif'],
     amenities: ['Wi-Fi', 'Кондиционер', 'Телевизор', 'Кухня', 'Сейф'],
     price: 18000,
+    capacity: 4,
     policies: {
       checkIn: 'После 15:00',
       checkOut: 'До 12:00',

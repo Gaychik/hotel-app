@@ -1,6 +1,7 @@
 // types.ts
 
 // Тип для одного номера, который мы уже использовали
+
 export interface Room {
   id: string;
   name: string;
@@ -8,11 +9,26 @@ export interface Room {
   images: string[];
   amenities: string[];
   price: number;
+  capacity: number; 
+  // НОВОЕ ПОЛЕ
   policies: {
     checkIn: string;
     checkOut: string;
     cancellation: string;
     pets: string;
+  };
+  // Добавляем поля для отслеживания доступности по датам
+  availability?: {
+    // Массив забронированных периодов
+    bookedDates?: {
+      start: string; // формат 'YYYY-MM-DD'
+      end: string;   // формат 'YYYY-MM-DD'
+    }[];
+    // Массив частично забронированных периодов (например, когда частично забронированы удобства)
+    partialDates?: {
+      start: string; // формат 'YYYY-MM-DD'
+      end: string;   // формат 'YYYY-MM-DD'
+    }[];
   };
 }
 

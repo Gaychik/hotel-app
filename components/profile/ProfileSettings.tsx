@@ -6,27 +6,59 @@ import { useState, useEffect } from 'react';
 
 export const ProfileSettings = ({ profile }: { profile: Profile }) => {
     const [isEditing, setIsEditing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Состояния для каждого поля
     const [name, setName] = useState(profile.name);
+    const [email, setEmail] = useState(profile.email ?? ''); // Добавляем email
     const [phone, setPhone] = useState(profile.phone);
 
-    // Обновляем состояние, если пропс profile изменился
-    useEffect(() => {
+    // Функция-маска для номера телефона
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const input = e.target.value.replace(/\D/g, ''); // Удаляем все не-цифры
+        let formatted = '+7';
+
+        if (input.length > 1) {
+            formatted += ` (${input.substring(1, 4)}`;
+        }
+        if (input.length >= 5) {
+            formatted += `) ${input.substring(4, 7)}`;
+        }
+        if (input.length >= 8) {
+            formatted += `-${input.substring(7, 9)}`;
+        }
+        if (input.length >= 10) {
+            formatted += `-${input.substring(9, 11)}`;
+        }
+        
+        setPhone(formatted);
+    };
+
+    // Сброс полей при отмене
+    const handleCancel = () => {
         setName(profile.name);
+        setEmail(profile.email ?? '');
         setPhone(profile.phone);
-    }, [profile]);
+        setIsEditing(false);
+    };
 
     const handleSave = () => {
-        console.log('Сохранение данных:', { name, phone });
-        // Здесь будет логика отправки данных на сервер
-        setIsEditing(false);
+        setIsSaving(true);
+        console.log('Сохранение данных:', { name, email, phone });
+        // Имитация задержки сети
+        setTimeout(() => {
+            setIsSaving(false);
+            setIsEditing(false);
+            // В реальном приложении здесь бы обновились пропсы
+        }, 1000);
     };
 
-    const handleCancel = () => {
-        // Возвращаем исходные значения
+    // Обновляем состояние, если пропсы изменились (например, после "сохранения")
+    useEffect(() => {
         setName(profile.name);
+        setEmail(profile.email ?? '');
         setPhone(profile.phone);
-        setIsEditing(false);
-    };
+    }, [profile]);
 
     return (
         <div className="border rounded-lg p-6 bg-white shadow-sm">
@@ -39,7 +71,19 @@ export const ProfileSettings = ({ profile }: { profile: Profile }) => {
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        disabled={!isEditing}
+                        disabled={!isEditing || isSaving}
+                        className="mt-1 block w-full p-3 border rounded-md bg-gray-50 disabled:bg-gray-200 disabled:text-gray-500 transition"
+                    />
+                </div>
+                 <div>
+                    <label htmlFor="email" className="text-sm font-medium text-gray-700">Email</label>
+                    <input
+                        id="email"
+                        type="email"
+                        value={email}
+                        placeholder="example@mail.com"
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={!isEditing || isSaving}
                         className="mt-1 block w-full p-3 border rounded-md bg-gray-50 disabled:bg-gray-200 disabled:text-gray-500 transition"
                     />
                 </div>
@@ -49,20 +93,20 @@ export const ProfileSettings = ({ profile }: { profile: Profile }) => {
                         id="phone"
                         type="tel"
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+7 (999) 999-99-99"
-                        disabled={!isEditing}
+                        onChange={handlePhoneChange}
+                        maxLength={18} // +7 (999) 999-99-99
+                        disabled={!isEditing || isSaving}
                         className="mt-1 block w-full p-3 border rounded-md bg-gray-50 disabled:bg-gray-200 disabled:text-gray-500 transition"
                     />
                 </div>
             </div>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                {isEditing ? (
+                 {isEditing ? (
                     <>
-                        <button onClick={handleSave} className="w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-blue-700 transition-colors">
-                            Сохранить
+                        <button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed">
+                            {isSaving ? 'Сохранение...' : 'Сохранить'}
                         </button>
-                        <button onClick={handleCancel} className="w-full sm:w-auto bg-gray-200 font-semibold py-2 px-6 rounded-md hover:bg-gray-300 transition-colors">
+                        <button onClick={handleCancel} disabled={isSaving} className="w-full sm:w-auto bg-gray-200 font-semibold py-2 px-6 rounded-md hover:bg-gray-300 transition-colors">
                             Отмена
                         </button>
                     </>

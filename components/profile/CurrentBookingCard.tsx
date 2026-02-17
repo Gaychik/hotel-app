@@ -3,6 +3,7 @@
 
 import Image from 'next/image';
 import type { Booking } from '@/types';
+import { useRouter } from 'next/navigation';
 
 interface CurrentBookingCardProps {
     booking: Booking;
@@ -12,14 +13,19 @@ interface CurrentBookingCardProps {
 
 export const CurrentBookingCard = ({ booking, onBookingCancel, onBookingChange }: CurrentBookingCardProps) => {
 
+
+      const router = useRouter();
+
+    const handleChangeBooking = () => {
+        // Вот ключевой момент: мы передаем ID комнаты в URL
+        router.push(`/calendar?roomId=${booking.room.id}`);
+    };
+
     const handleCancelBooking = () => {
         onBookingCancel?.(booking.id);
     };
 
-    const handleChangeBooking = () => {
-        onBookingChange?.(booking.id);
-    };
-    
+ 
     const getStatusInfo = () => {
         switch(booking.status) {
             case 'active': return { text: 'Активно', color: 'text-green-700 bg-green-100' };

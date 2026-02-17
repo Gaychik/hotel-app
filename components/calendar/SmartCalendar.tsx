@@ -68,7 +68,7 @@ export default function SmartCalendar() {
     }
   }, [searchParams]);
 
-const handleDateSelect = (selectedRange: DateRange | undefined) => {
+  const handleDateSelect = (selectedRange: DateRange | undefined) => {
     setRange(selectedRange);
 
     const currentParams = new URLSearchParams(Array.from(searchParams.entries()));
@@ -96,31 +96,26 @@ const handleDateSelect = (selectedRange: DateRange | undefined) => {
 
 
   
- const handleConfirmBooking = () => {
-  if (!range?.from || !range?.to || (!bookingRoomId && !searchParams.get('currentBookingId'))) return;
-  
-  const currentBookingId = searchParams.get('currentBookingId');
-  
-  if (currentBookingId) {
-    // Это изменение существующего бронирования
-    const queryParams = new URLSearchParams({
-      currentBookingId: currentBookingId,
-      roomId: bookingRoomId || searchParams.get('roomId') || '',
-      checkIn: format(range.from, 'yyyy-MM-dd') || '',
-      checkOut: format(range.to, 'yyyy-MM-dd') || '',
-    });
-    router.push(`/booking/change?${queryParams.toString()}`);
-  } else {
-    // Это создание нового бронирования (обычная логика)
-    const queryParams = new URLSearchParams({
-      roomId: bookingRoomId || searchParams.get('roomId') || '',
-      checkIn: format(range.from, 'yyyy-MM-dd') || '',
-      checkOut: format(range.to, 'yyyy-MM-dd') || '',
-    });
-    router.push(`/booking?${queryParams.toString()}`);
-  }
-};
-  
+  const handleConfirmBooking = () => {
+        if (!range?.from || !range?.to) return;
+    
+        const roomId = searchParams.get('roomId');
+        const currentBookingId = searchParams.get('currentBookingId');
+
+        const queryParams = new URLSearchParams({
+            roomId: roomId || '',
+            checkIn: format(range.from, 'yyyy-MM-dd'),
+            checkOut: format(range.to, 'yyyy-MM-dd'),
+        });
+
+        if (currentBookingId) {
+            queryParams.set('currentBookingId', currentBookingId);
+            router.push(`/booking/change?${queryParams.toString()}`);
+        } else {
+            router.push(`/booking?${queryParams.toString()}`);
+        }
+    };
+
   const isRangeSelected = range?.from && range?.to;
 
   return (
@@ -180,34 +175,37 @@ const handleDateSelect = (selectedRange: DateRange | undefined) => {
                 </div>
               </div>
            </div>
+          
+      </div>
             
        {/* --- Панель с предложениями (ПК) --- */}
-      { !searchParams.has('currentBookingId') && !bookingMode && isDesktop && (
-        <div className="w-full lg:w-1/3 mt-8 lg:mt-0">
-          <BookingDetailsPanel selectedRange={range} />
-        </div>
-      )}
+      {isDesktop && !bookingMode && (
+                <div className="w-full lg:w-1/3 mt-8 lg:mt-0">
+                    <BookingDetailsPanel selectedRange={range} />
+                </div>
+            )}
 
+   
+       {!isDesktop && (
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t z-20">
+                    <div className="max-w-4xl mx-auto">
 
-        {/* --- РљРЅРѕРїРєР° РґР»СЏ РјРѕР±РёР»СЊРЅРѕР№ РІРµСЂСЃРёРё --- */}
-       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t z-20">
-        <div className="max-w-4xl mx-auto">
-          {/* Если режим бронирования и выбраны даты -> кнопка "Подтвердить" */}
-          {(searchParams.has('currentBookingId') || bookingMode) && isRangeSelected && (
-            <button onClick={handleConfirmBooking} className="w-full bg-black text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95">
-              Подтвердить даты
-            </button>
-          )}
+                        {/* ✅ ВАША ЛОГИКА: КНОПКА "ПОДТВЕРДИТЬ" ДЛЯ ЦЕЛЕВОГО РЕЖИМА */}
+                        {bookingMode && isRangeSelected && (
+                            <button onClick={handleConfirmBooking} className="w-full bg-black text-white font-bold py-3 px-4 rounded-lg shadow-lg ...">
+                                Подтвердить даты
+                            </button>
+                        )}
 
-          {/* Если НЕ режим бронирования на мобильном -> кнопка "Посмотреть" */}
-          {!bookingMode && !isDesktop && isRangeSelected && (
-            <button onClick={() => setShowMobilePanel(true)} className="w-full bg-black text-white font-bold py-3 px-4 rounded-lg shadow-lg ...">
-              Посмотреть предложения
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+                        {/* ✅ ВАША ЛОГИКА: КНОПКА "ПОСМОТРЕТЬ" ДЛЯ СВОБОДНОГО ПОИСКА */}
+                        {!bookingMode && isRangeSelected && (
+                            <button onClick={() => setShowMobilePanel(true)} className="w-full bg-black text-white font-bold py-3 px-4 rounded-lg shadow-lg ...">
+                                Посмотреть предложения
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
 
       {/* --- Панель с предложениями (Мобильная, всплывающая) --- */}
       {!bookingMode && !isDesktop && showMobilePanel && (

@@ -13,8 +13,8 @@ export default async function ProfilePage() {
     return (
         <ProfileView 
             profile={profile}
-            currentBookings={currentBookingsData}
-            pastBookings={pastBookingsData}
+            initialCurrentBookings={currentBookingsData}
+            initialPastBookings={pastBookingsData}
         />
     );
 }

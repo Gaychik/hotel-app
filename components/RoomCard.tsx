@@ -4,11 +4,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { CSSTransition, SwitchTransition } from 'react-transition-group';
-import type { Room } from '@/data/rooms'; // Импортируем наш тип
+import type { Room } from '@/types'; // Импортируем наш тип
 import { useRouter } from 'next/navigation';
 import { HeartIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
-
+import { UserGroupIcon } from '@heroicons/react/24/solid';
 // Пропсы для карточки номера
 interface RoomCardProps {
   room: Room;
@@ -106,6 +106,12 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
       {/* Информационная часть */}
       <div className='flex flex-grow flex-col p-6'>
         <h3 className='text-xl font-bold font-source-serif-pro text-gray-800'>{room.name}</h3>
+
+          <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+            <UserGroupIcon className="h-5 w-5 text-gray-400" />
+            <span>до {room.capacity} гостей</span>
+        </div>
+
         <p className='mt-2 flex-grow text-sm text-gray-600 line-clamp-2'>{room.description}</p>
         
         {/* Блок удобств */}     

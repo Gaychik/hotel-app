@@ -6,7 +6,8 @@ import { ru } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
 import { RoomDetails } from '@/components/ui/RoomDetails';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { Room } from '@/data/rooms';
+import { Room } from '@/types';
+import { useRouter } from 'next/navigation';
 import { getAvailableRoomsByDates } from '@/lib/data';
 
 interface BookingDetailsPanelProps {
@@ -14,6 +15,7 @@ interface BookingDetailsPanelProps {
 }
 
 export default function BookingDetailsPanel({ selectedRange }: BookingDetailsPanelProps) {
+  const router = useRouter();
   if (!selectedRange?.from) {
     return (
       <div className='p-6 bg-white rounded-lg shadow-lg h-full flex flex-col justify-center items-center text-center'>
@@ -56,6 +58,16 @@ export default function BookingDetailsPanel({ selectedRange }: BookingDetailsPan
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleBook = () => {
+    if (!selectedRange?.from || !selectedRange?.to || !selectedRoom) return;
+
+    const checkInStr = format(selectedRange.from, 'yyyy-MM-dd');
+    const checkOutStr = format(selectedRange.to, 'yyyy-MM-dd');
+
+    // ✅ ИСПОЛЬЗУЕМ router.push ВМЕСТО window.location.href
+    router.push(`/booking?roomId=${selectedRoom.id}&checkIn=${checkInStr}&checkOut=${checkOutStr}`);
   };
 
   // Состояние для отслеживания выбранного номера
@@ -127,10 +139,12 @@ export default function BookingDetailsPanel({ selectedRange }: BookingDetailsPan
       </div>
 
       {/* Плавно раскрывающаяся детальная информация о номере */}
-      <div 
-        className={`transition-all duration-500 ease-in-out overflow-hidden ${selectedRoom ? 'max-h-96' : 'max-h-0'}`}
+       <div 
+        className={`transition-all duration-500 ease-in-out overflow-hidden mt-4 ${selectedRoom ? 'max-h-[500px]' : 'max-h-0'}`}
       >
-        <div className='p-4 border rounded-lg bg-white shadow-lg'>
+        {/* ✅ Добавляем проверку, чтобы блок не "моргал" при смене selectedRoom */}
+        {selectedRoom && (
+            <div className='p-4 border rounded-lg bg-white shadow-lg'>
           <div className='flex justify-between items-center mb-4'>
             <h3 className='text-xl font-bold'>{selectedRoom?.name}</h3>
             <button 
@@ -146,27 +160,24 @@ export default function BookingDetailsPanel({ selectedRange }: BookingDetailsPan
             amenities={selectedRoom?.amenities || []} 
           />
           
-          <div className='mt-6 flex justify-end space-x-4'>
-            <button 
-              className='px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors'
-              onClick={() => setSelectedRoom(null)}
-            >
-              Закрыть
-            </button>
-            <button 
-              className='px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors'
-              onClick={() => {
-                // Перенаправляем на страницу бронирования с параметрами
-                const checkInStr = format(checkIn, 'yyyy-MM-dd');
-                const checkOutStr = format(checkOut || new Date(), 'yyyy-MM-dd');
-                window.location.href = `/booking?roomId=${selectedRoom?.id}&checkIn=${checkInStr}&checkOut=${checkOutStr}`;
-              }}
-            >
-              Забронировать
-            </button>
+            <div className='mt-6 flex justify-end space-x-4'>
+                    <button 
+                        className='px-6 py-2 border border-gray-300 rounded-lg ...'
+                        onClick={() => setSelectedRoom(null)}
+                    >
+                        Закрыть
+                    </button>
+                    {/* ✅ Кнопка вызывает исправленный обработчик */}
+                    <button 
+                        className='px-6 py-2 bg-black text-white rounded-lg ...'
+                        onClick={handleBook}
+                    >
+                        Забронировать
+                    </button>
+                </div>
           </div>
-        </div>
+        )}
       </div>
-    </div>
-  );
+      </div> 
+  )
 }

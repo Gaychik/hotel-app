@@ -8,18 +8,36 @@ import { HistoryBookingCard } from '@/components/profile/HistoryBookingCard';
 import { UserIcon, CalendarIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import type { Profile, Booking } from '@/types';
 
+
 type Tab = 'current' | 'history' | 'profile';
 
 // Принимаем данные, полученные на сервере, через props
 interface ProfileViewProps {
     profile: Profile;
-    currentBookings: Booking[];
-    pastBookings: Booking[];
+    initialCurrentBookings: Booking[]; // Переименовали для ясности
+    initialPastBookings: Booking[]; 
 }
 
-export function ProfileView({ profile, currentBookings, pastBookings }: ProfileViewProps) {
+export function ProfileView({ profile, initialCurrentBookings, initialPastBookings }: ProfileViewProps) {
     const [activeTab, setActiveTab] = useState<Tab>('current');
     
+
+    // Управляем состоянием списков прямо здесь
+    const [currentBookings, setCurrentBookings] = useState(initialCurrentBookings);
+    const [pastBookings, setPastBookings] = useState(initialPastBookings);
+
+    // Функция для отмены бронирования
+    const handleCancelBooking = (bookingId: string) => {
+        const bookingToCancel = currentBookings.find(b => b.id === bookingId);
+        if (!bookingToCancel) return;
+
+        // 1. Удаляем из текущих
+        setCurrentBookings(currentBookings.filter(b => b.id !== bookingId));
+        
+        // 2. Добавляем в историю с новым статусом
+        setPastBookings(prev => [{ ...bookingToCancel, status: 'cancelled' }, ...prev]);
+    };
+
     const tabs = [
         { id: 'current', label: 'Текущее', icon: CalendarIcon },
         { id: 'history', label: 'История', icon: BookOpenIcon },
@@ -33,10 +51,14 @@ export function ProfileView({ profile, currentBookings, pastBookings }: ProfileV
                     <div className="space-y-6">
                         {currentBookings.length > 0 ? (
                             currentBookings.map(booking => (
-                                <CurrentBookingCard key={booking.id} booking={booking} />
+                                <CurrentBookingCard 
+                                    key={booking.id} 
+                                    booking={booking}
+                                    onBookingCancel={handleCancelBooking} // <-- Передаем функцию
+                                />
                             ))
                         ) : (
-                            <p className="text-center text-gray-500">У вас нет активных бронирований.</p>
+                            <p className="text-center text-gray-500 py-10">У вас нет активных бронирований.</p>
                         )}
                     </div>
                 );
@@ -44,16 +66,15 @@ export function ProfileView({ profile, currentBookings, pastBookings }: ProfileV
                 return (
                      <div className="space-y-4">
                         {pastBookings.length > 0 ? (
-                            pastBookings.map(booking => (
+                             pastBookings.sort((a,b) => new Date(b.checkIn).getTime() - new Date(a.checkIn).getTime()).map(booking => (
                                 <HistoryBookingCard key={booking.id} booking={booking} />
                             ))
                         ) : (
-                             <p className="text-center text-gray-500">Ваша история бронирований пуста.</p>
+                             <p className="text-center text-gray-500 py-10">Ваша история бронирований пуста.</p>
                         )}
                     </div>
                 );
             case 'profile':
-                // Передаем данные профиля в компонент настроек
                 return <ProfileSettings profile={profile} />;
             default:
                 return null;

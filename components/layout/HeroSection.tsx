@@ -39,7 +39,7 @@ const HeroSection: React.FC = () => {
      // Навигация в календарь
     const goToCalendar = () => router.push(`/calendar?guests=${guestCount}`);
     // Навигация к списку номеров
-    const goToRooms = () => router.push('/rooms');
+     const goToRooms = () => router.push(`/rooms?guests=${guestCount}`);
     const guestText = (count: number) => {
         if (count === 1) return 'гость';
         if (count > 1 && count < 5) return 'гостя';
