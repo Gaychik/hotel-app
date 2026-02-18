@@ -121,8 +121,7 @@ export default function SmartCalendar() {
   return (
 
 
-    <div className="relative flex flex-col lg:flex-row lg:space-x-8 p-4 w-full">
-      {bookingMode && <BackButton />}
+    <div className="relative flex flex-col lg:flex-row lg:space-x-8 p-4 pt-20 w-full pb-24"> 
       {/* CHANGED: Обертка для увеличения календаря на ПК */}
       <div className="flex-grow lg:max-w-4xl lg:mx-auto">
          <h1 className="text-3xl font-bold mb-4 font-karantina text-center lg:text-left">
@@ -186,26 +185,24 @@ export default function SmartCalendar() {
             )}
 
    
-       {!isDesktop && (
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t z-20">
-                    <div className="max-w-4xl mx-auto">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t z-20">
+                <div className="max-w-4xl mx-auto">
 
-                        {/* ✅ ВАША ЛОГИКА: КНОПКА "ПОДТВЕРДИТЬ" ДЛЯ ЦЕЛЕВОГО РЕЖИМА */}
-                        {bookingMode && isRangeSelected && (
-                            <button onClick={handleConfirmBooking} className="w-full bg-black text-white font-bold py-3 px-4 rounded-lg shadow-lg ...">
-                                Подтвердить даты
-                            </button>
-                        )}
+                    {/* КНОПКА "ПОДТВЕРДИТЬ" ДЛЯ ЦЕЛЕВОГО РЕЖИМА (РАБОТАЕТ ВЕЗДЕ) */}
+                    {bookingMode && isRangeSelected && (
+                        <button onClick={handleConfirmBooking} className="w-full bg-black text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-transform hover:scale-105 active:scale-95">
+                            Подтвердить даты
+                        </button>
+                    )}
 
-                        {/* ✅ ВАША ЛОГИКА: КНОПКА "ПОСМОТРЕТЬ" ДЛЯ СВОБОДНОГО ПОИСКА */}
-                        {!bookingMode && isRangeSelected && (
-                            <button onClick={() => setShowMobilePanel(true)} className="w-full bg-black text-white font-bold py-3 px-4 rounded-lg shadow-lg ...">
-                                Посмотреть предложения
-                            </button>
-                        )}
-                    </div>
+                    {/* КНОПКА "ПОСМОТРЕТЬ" ДЛЯ СВОБОДНОГО ПОИСКА (ТОЛЬКО МОБИЛЬНЫЕ) */}
+                    {!bookingMode && !isDesktop && isRangeSelected && (
+                        <button onClick={() => setShowMobilePanel(true)} className="w-full bg-black text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-transform hover:scale-105 active:scale-95">
+                            Посмотреть предложения
+                        </button>
+                    )}
                 </div>
-            )}
+            </div>
 
       {/* --- Панель с предложениями (Мобильная, всплывающая) --- */}
       {!bookingMode && !isDesktop && showMobilePanel && (
