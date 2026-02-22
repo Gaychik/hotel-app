@@ -1,183 +1,147 @@
 // components/calendar/BookingDetailsPanel.tsx
+'use client';
 
 import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
-import { RoomDetails } from '@/components/ui/RoomDetails';
-import { XMarkIcon } from '@heroicons/react/24/outline';
-import { Room } from '@/types';
 import { useRouter } from 'next/navigation';
+import type { Room } from '@/types';
 import { getAvailableRoomsByDates } from '@/lib/data';
+import { TransitionGroup, CSSTransition } from 'react-transition-group';
+import { ChevronUpIcon, ArrowRightIcon } from '@heroicons/react/24/solid';
+import Image from 'next/image'; 
 
-interface BookingDetailsPanelProps {
-  selectedRange: DateRange | undefined;
-}
+const AvailableRoomCard = ({ room }: { room: Room }) => {
+    const router = useRouter();
+    const [isExpanded, setIsExpanded] = useState(false);
 
-export default function BookingDetailsPanel({ selectedRange }: BookingDetailsPanelProps) {
-  const router = useRouter();
-  if (!selectedRange?.from) {
+    const handleGoToRoom = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        router.push(`/rooms/${room.id}`);
+    };
+
     return (
-      <div className='p-6 bg-white rounded-lg shadow-lg h-full flex flex-col justify-center items-center text-center'>
-        <h2 className='text-xl font-bold mb-2 font-istok-web'>Детали бронирования</h2>
-        <p className='text-gray-500'>Выберите даты в календаре, чтобы увидеть доступные номера и рассчитать стоимость.</p>
-      </div>
-    );
-  }
+        <CSSTransition timeout={300} classNames="room-item">
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
+                {/* ✅ 2. Основная часть теперь - это flex-контейнер */}
+                <div 
+                    className="p-4 cursor-pointer"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                >
+                    <div className="flex items-start gap-4">
+                        {/* ✅ 3. Добавляем изображение номера */}
+                        <div className="flex-shrink-0">
+                            <Image
+                                src={room.images[0]}
+                                alt={room.name}
+                                width={80}
+                                height={80}
+                                className="rounded-lg object-cover aspect-square"
+                            />
+                        </div>
+                        
+                        {/* Контейнер для текста, чтобы он занял оставшееся место */}
+                        <div className="flex-grow">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h4 className="font-bold text-gray-800">{room.name}</h4>
+                                    <p className="text-sm text-gray-500 mt-1">до {room.capacity} гостей</p>
+                                </div>
+                                <p className="text-right font-bold text-lg text-gray-900 whitespace-nowrap ml-2">
+                                    {room.price.toLocaleString('ru-RU')} ₽
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-  const checkIn = selectedRange.from;
-  const checkOut = selectedRange.to;
-
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (selectedRange?.from && selectedRange?.to) {
-      fetchRooms(selectedRange);
-    }
-  }, [selectedRange]);
-
-  const fetchRooms = async (range: DateRange) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Форматируем даты в строку для передачи в API
-      const checkInStr = format(range.from || new Date(), 'yyyy-MM-dd');
-      const checkOutStr = format(range.to || new Date(), 'yyyy-MM-dd');
-      
-      // Получаем доступные номера для указанных дат
-      const availableRooms = await getAvailableRoomsByDates(checkInStr, checkOutStr);
-      setRooms(availableRooms);
-    } catch (err) {
-      console.error('Error fetching rooms:', err);
-      setError('Ошибка при загрузке доступных номеров');
-      // В случае ошибки можно показать все номера или пустой список
-      setRooms([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBook = () => {
-    if (!selectedRange?.from || !selectedRange?.to || !selectedRoom) return;
-
-    const checkInStr = format(selectedRange.from, 'yyyy-MM-dd');
-    const checkOutStr = format(selectedRange.to, 'yyyy-MM-dd');
-
-    // ✅ ИСПОЛЬЗУЕМ router.push ВМЕСТО window.location.href
-    router.push(`/booking?roomId=${selectedRoom.id}&checkIn=${checkInStr}&checkOut=${checkOutStr}`);
-  };
-
-  // Состояние для отслеживания выбранного номера
-  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-
-  return (
-    <div className='p-6 bg-white rounded-lg shadow-lg h-full'>
-      <h2 className='text-2xl font-bold mb-4 font-istok-web'>Ваш выбор</h2>
-      <div className='space-y-4'>
-        <div>
-            <h3 className='font-semibold'>Заезд</h3>
-            <p className='text-lg text-blue-700'>{format(checkIn, 'd MMMM yyyy', { locale: ru })}</p>
-        </div>
-        {checkOut && (
-            <div>
-                <h3 className='font-semibold'>Выезд</h3>
-                <p className='text-lg text-blue-700'>{format(checkOut, 'd MMMM yyyy', { locale: ru })}</p>
+                {/* Раскрывающаяся детальная часть (остается без изменений) */}
+                <div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-96' : 'max-h-0'}`}>
+                    <div className="px-4 pb-4">
+                        <p className="text-sm text-gray-600 mb-4">{room.description}</p>
+                        <div className="flex justify-between items-center">
+                            {/* Кнопка "Свернуть" */}
+                            <button
+                                onClick={() => setIsExpanded(false)}
+                                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                                aria-label="Свернуть"
+                            >
+                                <ChevronUpIcon className="h-6 w-6 text-gray-600" />
+                            </button>
+                            {/* Кнопка "Перейти" */}
+                            <button
+                                onClick={handleGoToRoom}
+                                className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-semibold"
+                            >
+                                <span>Перейти</span>
+                                <ArrowRightIcon className="h-4 w-4" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-        )}
-      </div>
+        </CSSTransition>
+    );
+};
 
-      <hr className='my-6' />
+// Основной компонент панели
+export default function BookingDetailsPanel({ selectedRange }: { selectedRange: DateRange | undefined }) {
+    const [rooms, setRooms] = useState<Room[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-      <div>
-        <h3 className='text-xl font-bold mb-4 font-istok-web'>Доступные номера</h3>
-        
-        {error && (
-          <div className='text-red-500 text-center py-4'>
-            {error}
-          </div>
-        )}
-        
-        {loading ? (
-          <div className='flex justify-center items-center h-32'>
-            <p className='text-gray-500'>Загрузка доступных номеров...</p>
-          </div>
-        ) : rooms.length === 0 ? (
-          <div className='text-center py-4 text-gray-500'>
-            {error ? 'Произошла ошибка' : 'Нет доступных номеров на выбранные даты'}
-          </div>
-        ) : (
-          <div className='space-y-4'>
-            {rooms.map((room) => (
-              <div 
-                key={room.id} 
-                className='p-4 border rounded-lg bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors duration-200' 
-                onClick={() => setSelectedRoom(room)}
-              >
-                <div className='flex justify-between items-start'>
-                  <div>
-                    <p className='font-bold'>{room.name}</p>
-                    <p className='text-sm text-gray-600'>{room.description}</p>
-                  </div>
-                  <p className='text-right font-bold text-lg'>{room.price.toLocaleString()} ₽</p>
-                </div>
-                {room.amenities && room.amenities.length > 0 && (
-                  <div className='mt-2 flex flex-wrap gap-1'>
-                    {room.amenities.map((amenity, index) => (
-                      <span key={index} className='text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded'>
-                        {amenity}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+    useEffect(() => {
+        if (selectedRange?.from && selectedRange?.to) {
+            const fetchRooms = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    const checkInStr = format(selectedRange.from!, 'yyyy-MM-dd');
+                    const checkOutStr = format(selectedRange.to!, 'yyyy-MM-dd');
+                    const availableRooms = await getAvailableRoomsByDates(checkInStr, checkOutStr);
+                    setRooms(availableRooms);
+                } catch (err) {
+                    setError('Ошибка при загрузке номеров');
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchRooms();
+        } else {
+            setRooms([]); // Очищаем список, если даты сброшены
+        }
+    }, [selectedRange]);
 
-      {/* Плавно раскрывающаяся детальная информация о номере */}
-       <div 
-        className={`transition-all duration-500 ease-in-out overflow-hidden mt-4 ${selectedRoom ? 'max-h-[500px]' : 'max-h-0'}`}
-      >
-        {/* ✅ Добавляем проверку, чтобы блок не "моргал" при смене selectedRoom */}
-        {selectedRoom && (
-            <div className='p-4 border rounded-lg bg-white shadow-lg'>
-          <div className='flex justify-between items-center mb-4'>
-            <h3 className='text-xl font-bold'>{selectedRoom?.name}</h3>
-            <button 
-              onClick={() => setSelectedRoom(null)}
-              className='text-gray-500 hover:text-gray-700'
-            >
-              <XMarkIcon className='h-6 w-6' />
-            </button>
-          </div>
-          
-          <RoomDetails 
-            description={selectedRoom?.description || ''} 
-            amenities={selectedRoom?.amenities || []} 
-          />
-          
-            <div className='mt-6 flex justify-end space-x-4'>
-                    <button 
-                        className='px-6 py-2 border border-gray-300 rounded-lg ...'
-                        onClick={() => setSelectedRoom(null)}
-                    >
-                        Закрыть
-                    </button>
-                    {/* ✅ Кнопка вызывает исправленный обработчик */}
-                    <button 
-                        className='px-6 py-2 bg-black text-white rounded-lg ...'
-                        onClick={handleBook}
-                    >
-                        Забронировать
-                    </button>
-                </div>
-          </div>
-        )}
-      </div>
-      </div> 
-  )
+    if (!selectedRange?.from) {
+        return (
+            <div className='p-6 bg-white rounded-lg shadow-lg h-full flex flex-col justify-center items-center text-center'>
+                <h2 className='text-xl font-bold mb-2 font-istok-web'>Детали бронирования</h2>
+                <p className='text-gray-500'>Выберите даты в календаре, чтобы увидеть доступные номера.</p>
+            </div>
+        );
+    }
+    
+    return (
+        <div className='p-4 md:p-6 bg-white rounded-lg shadow-lg h-full'>
+            <h2 className='text-2xl font-bold mb-4 font-istok-web'>Доступные номера</h2>
+            
+            {loading && <p className="text-center text-gray-500 py-4">Загрузка...</p>}
+            {error && <p className="text-center text-red-500 py-4">{error}</p>}
+            
+            {!loading && !error && rooms.length === 0 && (
+                 <p className="text-center text-gray-500 py-4">Нет доступных номеров на выбранные даты.</p>
+            )}
+            
+            {/* ✅ КОНТЕЙНЕР ДЛЯ АНИМИРОВАННОГО СПИСКА */}
+            <TransitionGroup className="space-y-4">
+                {rooms.map((room) => (
+                    // Оборачиваем каждую карточку в CSSTransition для индивидуальной анимации
+                    <CSSTransition key={room.id} timeout={300} classNames="room-item">
+                        <AvailableRoomCard room={room} />
+                    </CSSTransition>
+                ))}
+            </TransitionGroup>
+        </div>
+    );
 }

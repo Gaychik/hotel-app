@@ -11,18 +11,21 @@ import CalendarDayContent from '@/components/calendar/CalendarDayContent';
 import BookingDetailsPanel from '@/components/calendar/BookingDetailPanel';
 import { XMarkIcon } from '@heroicons/react/24/solid';
 import { format, parseISO, isValid } from 'date-fns'; 
-import { BackButton } from '@/components/ui/BackButton';
-
+import { getDisabledDates } from '@/lib/data'; // <-- 1. Импортируем нашу новую функцию
+import toast from 'react-hot-toast'; // <-- 2. Импортируем toast
 
 const useIsDesktop = () => {
     // ... (этот хук остается без изменений)
   const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
+
     const mediaQuery = window.matchMedia('(min-width: 1024px)');
     const handleResize = () => setIsDesktop(mediaQuery.matches);
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+
+
   }, []);
   return isDesktop;
 };
@@ -33,10 +36,20 @@ export default function SmartCalendar() {
   const searchParams = useSearchParams();
 
   const [bookingMode, setBookingMode] = useState(false);
-  const [bookingRoomId, setBookingRoomId] = useState<string | null>(null);
+
   const [range, setRange] = useState<DateRange | undefined>();
   const [showMobilePanel, setShowMobilePanel] = useState(false);
   const isDesktop = useIsDesktop();
+ // ✅ 3. НОВОЕ СОСТОЯНИЕ ДЛЯ ЗАБЛОКИРОВАННЫХ ДАТ
+    const [disabledDates, setDisabledDates] = useState<Date[]>([]);
+
+    // ✅ 4. ЗАГРУЖАЕМ ЗАБЛОКИРОВАННЫЕ ДАТЫ ПРИ МОНТИРОВАНИИ
+    useEffect(() => {
+        getDisabledDates().then(dates => {
+            setDisabledDates(dates);
+        });
+    }, []);
+
 
     const initialRange = useMemo(() => {
     const checkIn = searchParams.get('checkIn');
@@ -55,18 +68,24 @@ export default function SmartCalendar() {
 
 
 
-  useEffect(() => {
-    const mode = searchParams.get('mode');
-    const roomId = searchParams.get('roomId');
-    const currentBookingId = searchParams.get('currentBookingId');
-    if (mode === 'booking' && (roomId || currentBookingId)) {
-      setBookingMode(true);
-      setBookingRoomId(roomId);
-    } else {
-      setBookingMode(false);
-      setBookingRoomId(null);
-    }
-  }, [searchParams]);
+ useEffect(() => {
+        const roomId = searchParams.get('roomId');
+        const currentBookingId = searchParams.get('currentBookingId');
+
+        // Логика стала проще и надежнее: если мы знаем, КАКОЙ номер бронировать (roomId)
+        // или КАКОЕ бронирование изменять (currentBookingId),
+        // то это всегда "режим бронирования".
+        if (roomId || currentBookingId) {
+            setBookingMode(true);
+        } else {
+            setBookingMode(false);
+        }
+        
+        // Мы больше не зависим от параметра `mode=booking`,
+        // что делает компонент более устойчивым.
+
+    }, [searchParams]); // Зависимость только от searchParams
+
 
   const handleDateSelect = (selectedRange: DateRange | undefined) => {
     setRange(selectedRange);
@@ -117,10 +136,13 @@ export default function SmartCalendar() {
     };
 
   const isRangeSelected = range?.from && range?.to;
-
+// ✅ 5. ОБРАБОТЧИК КЛИКА ПО КОНКРЕТНОМУ ДНЮ
+    const handleDayClick = (day: Date, modifiers: { disabled?: boolean }) => {
+        if (modifiers.disabled) {
+            toast.error('Эта дата недоступна для бронирования');
+        }
+    };
   return (
-
-
     <div className="relative flex flex-col lg:flex-row lg:space-x-8 p-4 pt-20 w-full pb-24"> 
       {/* CHANGED: Обертка для увеличения календаря на ПК */}
       <div className="flex-grow lg:max-w-4xl lg:mx-auto">
@@ -139,7 +161,7 @@ export default function SmartCalendar() {
             components={{
               DayContent: CalendarDayContent,
             }}
-            disabled={{ before: new Date() }} 
+            
             className="w-full"
             
            classNames={{
@@ -156,6 +178,15 @@ export default function SmartCalendar() {
               day: 'w-full h-14 flex items-center justify-center', // РџСЂРёР¶РёРјР°РµРј СЏС‡РµР№РєРё РґСЂСѓРі Рє РґСЂСѓРіСѓ Рё Р·Р°РґР°РµРј С„РёРєСЃРёСЂРѕРІР°РЅРЅСѓСЋ РІС‹СЃРѕС‚Сѓ
               day_outside: 'opacity-20 pointer-events-none', // Делаем дни другого месяца некликабельными
             }}
+               // ✅ 6. ПЕРЕДАЕМ ЗАБЛОКИРОВАННЫЕ ДАТЫ В КАЛЕНДАРЬ
+                    // DayPicker теперь не позволит выбрать диапазон, пересекающий эти даты
+              disabled={[
+                        { before: new Date() }, // Отключаем прошлые даты
+                        ...disabledDates       // Отключаем забронированные даты
+                    ]}
+                    
+                    // ✅ 7. ИСПОЛЬЗУЕМ НАШ ОБРАБОТЧИК КЛИКА
+                    onDayClick={handleDayClick}
           />
 
               {/* --- NEW: Р›РµРіРµРЅРґР° РґР»СЏ Heatmap --- */}

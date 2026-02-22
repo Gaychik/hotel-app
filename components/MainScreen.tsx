@@ -1,14 +1,24 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './layout/Header';
 import HeroSection from './layout/HeroSection';
 import InfoSection from './layout/InfoSection';
 import FavoritesList from './FavoritesList';
+import { Modal } from './ui/Modal';
+import { ReviewsList } from './ReviewsList';
+import { getReviews } from '@/lib/data';
+import type { Review } from '@/types';
+
 
 const MainScreen: React.FC = () => {
     const [showFavorites, setShowFavorites] = useState(false);
-
+    const [isReviewsModalOpen, setIsReviewsModalOpen] = useState(false);
+    const [reviews, setReviews] = useState<Review[]>([]);
+      // Загружаем отзывы один раз при монтировании
+   useEffect(() => {
+    getReviews().then(setReviews);
+  }, []);
     return (
         <div className='bg-gray-100 font-sans'>
             <Header />
@@ -28,13 +38,16 @@ const MainScreen: React.FC = () => {
             
             <main>
                 <HeroSection />
-                <InfoSection />
+                <InfoSection onReviewsClick={() => setIsReviewsModalOpen(true)}/>
             </main>
        
             <FavoritesList 
                 isOpen={showFavorites} 
                 onClose={() => setShowFavorites(false)} 
             />
+             <Modal isOpen={isReviewsModalOpen} onClose={() => setIsReviewsModalOpen(false)}>
+        <ReviewsList reviews={reviews} />
+      </Modal>
         </div>
     );
 };

@@ -17,6 +17,9 @@ interface BookingFormProps {
   mode?: 'new' | 'change';
 }
 
+
+
+
 export const BookingForm = ({ roomId, checkIn, checkOut, currentBookingId, mode = 'new' }: BookingFormProps) => {
     const router = useRouter();
     const { data: session } = useSession(); // Получаем данные сессии
@@ -36,20 +39,32 @@ export const BookingForm = ({ roomId, checkIn, checkOut, currentBookingId, mode 
     const [error, setError] = useState<string | null>(null);
 
     // ✅ Загружаем данные о номере и автозаполняем форму
-    useEffect(() => {
+  useEffect(() => {
         const loadInitialData = async () => {
             try {
                 const roomData = await getRoomById(roomId);
                 if (roomData) {
                     setRoom(roomData);
-                    // Автозаполнение, если пользователь авторизован
+                    
+                    // --- ✅ УМНОЕ АВТОЗАПОЛНЕНИЕ ---
                     if (session?.user) {
-                        const nameParts = session.user.name?.split(' ') || ['',''];
+                        // 1. Обрабатываем имя
+                        const nameParts = session.user.name?.split(' ') || [];
                         setFirstName(nameParts[0] || '');
                         setLastName(nameParts.slice(1).join(' ') || '');
-                        setEmail(session.user.email || '');
-                        // Убедитесь, что в сессии есть телефон
-                        // setPhone(session.user.phone || ''); 
+
+                        // 2. Подставляем email, ТОЛЬКО ЕСЛИ ОН ЕСТЬ
+                        if (session.user.email) {
+                            setEmail(session.user.email);
+                        }
+
+                        // 3. Подставляем телефон, ТОЛЬКО ЕСЛИ ОН ЕСТЬ
+                        // Мы используем 'as any', потому что наш d.ts файл уже применился,
+                        // но иногда TypeScript может кэшировать старые типы.
+                        const userPhone = (session.user as any).phone;
+                        if (userPhone) {
+                            setPhone(userPhone);
+                        }
                     }
                 } else {
                     setError("Не удалось загрузить информацию о номере.");
@@ -61,7 +76,7 @@ export const BookingForm = ({ roomId, checkIn, checkOut, currentBookingId, mode 
             }
         };
         loadInitialData();
-    }, [roomId, session]);
+    }, [roomId, session]); 
 
     // Расчет стоимости
     const { totalNights, totalPrice } = useMemo(() => {
@@ -71,8 +86,27 @@ export const BookingForm = ({ roomId, checkIn, checkOut, currentBookingId, mode 
     }, [checkIn, checkOut, room]);
 
     // ✅ Валидация формы
-    const isFormValid = firstName && lastName && email && phone.length > 10;
-
+ 
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const input = e.target.value.replace(/\D/g, ''); // Удаляем все не-цифры
+        let formatted = '+7';
+        if (input.length > 1) {
+            formatted += ` (${input.substring(1, 4)}`;
+        }
+        if (input.length >= 5) {
+            formatted += `) ${input.substring(4, 7)}`;
+        }
+        if (input.length >= 8) {
+            formatted += `-${input.substring(7, 9)}`;
+        }
+        if (input.length >= 10) {
+            formatted += `-${input.substring(9, 11)}`;
+        }
+        setPhone(formatted);
+    };
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const isPhoneValid = phone.replace(/\D/g, '').length === 11; // Проверяем, что в номере ровно 11 цифр
+    const isFormValid = firstName && lastName && isEmailValid && isPhoneValid;
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!isFormValid) {
@@ -125,9 +159,9 @@ export const BookingForm = ({ roomId, checkIn, checkOut, currentBookingId, mode 
     }
 
     return (
-        <main className="container mx-auto py-12 px-4">
+        <main  className="container mx-auto py-12 px-4">
             <h1 className="text-3xl font-bold font-karantina mb-8 text-center">Подтверждение бронирования</h1>
-            
+            <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Левая колонка: Детали */}
                 <div className="lg:col-span-2 space-y-6">
@@ -140,7 +174,7 @@ export const BookingForm = ({ roomId, checkIn, checkOut, currentBookingId, mode 
                            <p><strong>Продолжительность:</strong> {totalNights} ночей</p>
                         </div>
                     </div>
-
+             
                     {/* ✅ ПОЛНОЦЕННАЯ ФОРМА */}
                     <div className="p-6 bg-white rounded-lg shadow">
                         <h2 className="text-xl font-bold mb-4">Информация о госте</h2>
@@ -161,7 +195,16 @@ export const BookingForm = ({ roomId, checkIn, checkOut, currentBookingId, mode 
 
                             <div className="sm:col-span-2">
                                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Телефон</label>
-                                <input type="tel" id="phone" value={phone} onChange={e => setPhone(e.target.value)} required placeholder="+7 (999) 123-45-67" className="mt-1 block w-full p-2 border rounded-md shadow-sm"/>
+                              <input 
+                                    type="tel" 
+                                    id="phone" 
+                                    value={phone} 
+                                    onChange={handlePhoneChange} // <-- ПРИМЕНЯЕМ МАСКУ
+                                    required 
+                                    placeholder="+7 (999) 123-45-67" 
+                                    maxLength={18} // Ограничение для форматированного номера
+                                    className="mt-1 block w-full p-2 border rounded-md shadow-sm"
+                                />
                             </div>
                         </div>
                     </div>
@@ -176,6 +219,9 @@ export const BookingForm = ({ roomId, checkIn, checkOut, currentBookingId, mode 
                             <span>{room.price.toLocaleString('ru-RU')}₽ x {totalNights} ночей</span> 
                             <span>{totalPrice.toLocaleString('ru-RU')} ₽</span>
                         </p>
+                        {error && (
+                            <p className="text-sm text-center text-red-600 my-4">{error}</p>
+                        )}
                         {/* Здесь могут быть налоги и сборы */}
                         <p className="flex justify-between text-sm text-gray-500">
                             <span>Налоги и сборы</span> 
@@ -187,10 +233,15 @@ export const BookingForm = ({ roomId, checkIn, checkOut, currentBookingId, mode 
                         <span>К оплате</span> 
                         <span>{totalPrice.toLocaleString('ru-RU')} ₽</span>
                      </p>
-                     <button type="submit" disabled={!isFormValid || isSubmitting} className="mt-6 w-full bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                   <button 
+                        type="submit" 
+                        disabled={!isFormValid || isSubmitting} 
+                        className="mt-6 w-full bg-black text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
                         {isSubmitting ? 'Обработка...' : 'Подтвердить и оплатить'}
                     </button>
                 </div>
+         </form>
         </main>
     );
 };

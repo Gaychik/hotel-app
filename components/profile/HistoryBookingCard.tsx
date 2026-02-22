@@ -13,7 +13,11 @@ const getStatusInfo = (status: Booking['status']) => {
     }
 };
 
-export const HistoryBookingCard = ({ booking }: { booking: Booking }) => {
+interface HistoryBookingCardProps {
+  booking: Booking;
+  onLeaveReview: (booking: Booking) => void; // ✅ НОВЫЙ ПРОПС
+}
+export const HistoryBookingCard = ({ booking, onLeaveReview }: HistoryBookingCardProps) => {
     const statusInfo = getStatusInfo(booking.status);
 
     return (
@@ -44,7 +48,9 @@ export const HistoryBookingCard = ({ booking }: { booking: Booking }) => {
             <div className="flex gap-3 w-full sm:w-auto">
                 {/* Кнопка "Оставить отзыв" только для завершенных */}
                 {booking.status === 'completed' && (
-                     <button className="flex-1 sm:flex-none bg-gray-200 font-semibold py-2 px-4 rounded-md hover:bg-gray-300 transition">Оставить отзыв</button>
+                     <button className="flex-1 sm:flex-none bg-gray-200 font-semibold py-2 px-4 rounded-md hover:bg-gray-300 transition"
+                     onClick={() => onLeaveReview(booking)}
+                     >Оставить отзыв</button>
                 )}
                 <button className="flex-1 sm:flex-none bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700 transition">Повторить</button>
             </div>

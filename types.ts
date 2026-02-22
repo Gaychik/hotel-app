@@ -56,3 +56,11 @@ export interface DayData {
   discount?: number; // Процент скидки
   event?: string; // Название события, например "Фестиваль"
 }
+
+export interface Review {
+  id: string;
+  author: string;
+  date: string;
+  rating: number; // от 1 до 5
+  text: string;
+}

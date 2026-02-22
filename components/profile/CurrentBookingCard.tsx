@@ -18,7 +18,13 @@ export const CurrentBookingCard = ({ booking, onBookingCancel, onBookingChange }
 
     const handleChangeBooking = () => {
         // Вот ключевой момент: мы передаем ID комнаты в URL
-        router.push(`/calendar?roomId=${booking.room.id}`);
+         const queryParams = new URLSearchParams({
+            mode: 'booking',
+            roomId: booking.room.id,
+            currentBookingId: booking.id, // ID самого бронирования
+        });
+
+        router.push(`/calendar?${queryParams.toString()}`);
     };
 
     const handleCancelBooking = () => {

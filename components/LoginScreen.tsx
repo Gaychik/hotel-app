@@ -1,11 +1,12 @@
-// components/LoginScreen.tsx
-
 'use client'
 
 import React, { useState, useRef, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { GoogleIcon, TelegramIcon, VkIcon } from '@/components/ui/Icons';
-import { signIn } from 'next-auth/react'; // Главная функция для входа
+import { VkIcon } from '@/components/ui/Icons'; // Убедитесь, что иконка находится по этому пути
+import { signIn } from 'next-auth/react';
+
+// Получаем URL бэкенда из переменных окружения
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const LoginScreen: React.FC = () => {
     const [step, setStep] = useState<'phoneInput' | 'codeInput'>('phoneInput');
@@ -13,7 +14,7 @@ const LoginScreen: React.FC = () => {
     const [phone, setPhone] = useState('');
     const [code, setCode] = useState<string[]>(['', '', '', '']);
     const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false); // Состояние для индикации загрузки
+    const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -21,13 +22,24 @@ const LoginScreen: React.FC = () => {
     const handleGetCode = (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        if (!name.trim()) {
+            setError('Пожалуйста, введите ваше имя.');
+            return;
+        }
         if (!phone || phone.length < 10) {
             setError('Пожалуйста, введите корректный номер телефона.');
             return;
         }
         // TODO: Здесь будет ваш API-запрос для отправки SMS.
         console.log(`Имитация отправки кода на номер: ${phone}`);
-        setStep('codeInput'); // Переходим на следующий шаг
+        setStep('codeInput');
+    };
+
+    // --- Логика для входа через VK ---
+    const handleVkLogin = () => {
+        // Мы используем window.location.href, потому что переходим на ВНЕШНИЙ АДРЕС (наш бэкенд),
+        // а не на другую страницу внутри нашего Next.js приложения. useRouter() для этого не предназначен.
+        window.location.href = `${BACKEND_URL}/auth/vk/login`;
     };
 
     // --- Шаг 2: Пользователь вводит код и нажимает "Подтвердить" ---
@@ -35,36 +47,35 @@ const LoginScreen: React.FC = () => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
-
         const fullCode = code.join('');
+
         if (fullCode.length !== 4) {
             setError('Пожалуйста, введите все 4 цифры.');
             setIsLoading(false);
             return;
         }
 
-        // Вызываем signIn от NextAuth с провайдером 'credentials'
-        const result = await signIn('credentials', {
-            redirect: false, // Отключаем автоматический редирект
+        // Вызываем signIn для нашего SMS-провайдера, передавая все нужные данные
+        const result = await signIn('sms-provider', {
+            redirect: false,
+            name: name,
             phone: phone,
-            code: fullCode, // Передаем собранный код
+            code: fullCode,
         });
 
         setIsLoading(false);
-
         if (result?.ok) {
             // Если authorize в NextAuth вернул пользователя, перенаправляем в профиль
             router.push('/profile');
-            router.refresh(); // Обновляем сессию для всего приложения
         } else {
             // Если authorize вернул null, показываем ошибку
             setError('Неверный код подтверждения. Попробуйте "1234".');
-            setCode(['', '', '', '']); // Сбрасываем поля
-            inputRefs.current[0]?.focus(); // Фокус на первое поле
+            setCode(['', '', '', '']);
+            inputRefs.current[0]?.focus();
         }
     };
     
-    // --- Логика для полей ввода кода (остается без изменений) ---
+    // --- Логика для полей ввода кода ---
     const handleCodeChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         if (isNaN(Number(value))) return;
@@ -128,14 +139,12 @@ const LoginScreen: React.FC = () => {
                         </div>
 
                         <div className="flex justify-center space-x-4">
-                             {/* 👇 Вызываем signIn для Google */}
-                            <button type="button" onClick={() => signIn('google', { callbackUrl: '/profile' })} className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200">
-                                <GoogleIcon className="h-6 w-6" />
-                            </button>
-                            <button type="button" className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200">
-                                <TelegramIcon className="h-6 w-6" />
-                            </button>
-                            <button type="button" className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200">
+                            <button 
+                                type="button" 
+                                onClick={handleVkLogin} 
+                                className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+                                aria-label="Войти через ВКонтакте"
+                            >
                                 <VkIcon className="h-6 w-6" />
                             </button>
                         </div>

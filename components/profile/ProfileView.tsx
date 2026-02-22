@@ -8,7 +8,8 @@ import { HistoryBookingCard } from '@/components/profile/HistoryBookingCard';
 import { UserIcon, CalendarIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import type { Profile, Booking } from '@/types';
 import { BackButton } from '../ui/BackButton';
-
+import { Modal } from '@/components/ui/Modal';
+import { ReviewForm } from '@/components/ReviewForm';
 
 type Tab = 'current' | 'history' | 'profile';
 
@@ -22,7 +23,18 @@ interface ProfileViewProps {
 export function ProfileView({ profile, initialCurrentBookings, initialPastBookings }: ProfileViewProps) {
     const [activeTab, setActiveTab] = useState<Tab>('current');
     
+        const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+        const [bookingToReview, setBookingToReview] = useState<Booking | null>(null);
 
+        const handleOpenReviewModal = (booking: Booking) => {
+            setBookingToReview(booking);
+            setIsReviewModalOpen(true);
+        };
+
+    const handleCloseReviewModal = () => {
+        setIsReviewModalOpen(false);
+        setBookingToReview(null);
+    };
     // Управляем состоянием списков прямо здесь
     const [currentBookings, setCurrentBookings] = useState(initialCurrentBookings);
     const [pastBookings, setPastBookings] = useState(initialPastBookings);
@@ -68,7 +80,7 @@ export function ProfileView({ profile, initialCurrentBookings, initialPastBookin
                      <div className="space-y-4">
                         {pastBookings.length > 0 ? (
                              pastBookings.sort((a,b) => new Date(b.checkIn).getTime() - new Date(a.checkIn).getTime()).map(booking => (
-                                <HistoryBookingCard key={booking.id} booking={booking} />
+                                <HistoryBookingCard key={booking.id} booking={booking} onLeaveReview={handleOpenReviewModal}  />
                             ))
                         ) : (
                              <p className="text-center text-gray-500 py-10">Ваша история бронирований пуста.</p>
@@ -112,6 +124,11 @@ export function ProfileView({ profile, initialCurrentBookings, initialPastBookin
                 <main className="flex-1">
                     {renderContent()}
                 </main>
+                {bookingToReview && (
+                    <Modal isOpen={isReviewModalOpen} onClose={handleCloseReviewModal}>
+                        <ReviewForm booking={bookingToReview} onClose={handleCloseReviewModal} />
+                    </Modal>
+                )}
             </div>
         </div>
     );

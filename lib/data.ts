@@ -1,9 +1,9 @@
 // lib/data.ts
 
 import { roomsData} from '@/data/rooms';
-import type { Booking, Profile } from '@/types';
+import type { Booking, Profile, Review } from '@/types';
 import { DayData } from '@/types';
-import { startOfMonth, endOfMonth, eachDayOfInterval, format } from 'date-fns';
+import { startOfMonth, endOfMonth, eachDayOfInterval, format, parseISO } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import type { Room } from '@/types';
 
@@ -329,3 +329,53 @@ export const getAvailableRoomsByDates = async (checkIn: string, checkOut: string
 //     throw error;
 //   }
 // };
+
+
+// ✅ Моковые данные для отзывов
+const reviewsData: Review[] = [
+  { id: 'rev1', author: 'Елена П.', date: '2026-01-15', rating: 5, text: 'Потрясающий вид из номера Делюкс! Все было на высшем уровне, обязательно вернемся снова.' },
+  { id: 'rev2', author: 'Иван С.', date: '2026-02-02', rating: 4, text: 'Хороший, чистый стандартный номер. Немного не хватало разнообразия на завтраке, но в целом все отлично.' },
+  { id: 'rev3', author: 'Семья Николаевых', date: '2026-02-10', rating: 5, text: 'Семейный люкс превзошел все ожидания! Очень просторно, есть своя кухня. Дети в восторге. Спасибо!' },
+];
+
+// ✅ Новая функция для получения отзывов
+export const getReviews = async (): Promise<Review[]> => {
+  await new Promise(resolve => setTimeout(resolve, 500)); // Имитация сети
+  return reviewsData;
+};
+
+// ✅ Новая функция для добавления отзыва
+export const addReview = async (review: Omit<Review, 'id' | 'date'>): Promise<Review> => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  const newReview: Review = {
+    ...review,
+    id: `rev${Date.now()}`,
+    date: new Date().toISOString(),
+  };
+  reviewsData.unshift(newReview); // Добавляем в начало массива
+  console.log("Новый отзыв добавлен:", newReview);
+  return newReview;
+};
+
+export const getDisabledDates = async (): Promise<Date[]> => {
+  await new Promise(resolve => setTimeout(resolve, 300)); // Имитация сети
+
+  const allBookedDays: Date[] = [];
+  roomsData.forEach(room => {
+    room.availability?.bookedDates?.forEach(period => {
+      // Получаем все дни в интервале и добавляем в общий массив
+      const daysInInterval = eachDayOfInterval({
+        start: parseISO(period.start),
+        end: parseISO(period.end)
+      });
+      allBookedDays.push(...daysInInterval);
+    });
+  });
+
+  // Возвращаем уникальные даты, чтобы не было дубликатов
+  const uniqueDates = allBookedDays.filter(
+    (date, index, self) => self.findIndex(d => d.getTime() === date.getTime()) === index
+  );
+
+  return uniqueDates;
+};

@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { Inter, Karantina, Istok_Web, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import NextAuthProvider from "@/providers/NextAuthProvider";
+import { Toaster } from 'react-hot-toast';
 
 // Настраиваем шрифты с CSS-переменными
 const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-inter" });
@@ -28,7 +29,16 @@ export default function RootLayout({
       {/* Переменная для Source Serif Pro будет --font-source-serif-pro, как мы и указали в tailwind.config.ts */}
       <body className={`${inter.variable} ${karantina.variable} ${istok.variable} ${sourceSerif.variable} font-sans`}>
         
-        <NextAuthProvider>{children}</NextAuthProvider>
+        <NextAuthProvider>
+          {children}
+           <Toaster // <-- 2. Добавляем компонент
+            position="bottom-center"
+            toastOptions={{
+              duration: 3000,
+            }}
+          />
+          </NextAuthProvider>
+
       </body>
     </html>
   );
