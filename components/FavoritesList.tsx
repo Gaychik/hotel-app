@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { Room } from '@/data/rooms';
+import { Room } from '@/types';
 import { roomsData } from '@/data/rooms';
 
 interface FavoritesListProps {

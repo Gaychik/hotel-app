@@ -8,6 +8,8 @@ import { getRoomById, createBooking, updateBooking } from '@/lib/data';
 import type { Room } from '@/types';
 import { differenceInCalendarDays, format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { SunIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline'; // Иконки для услуг
+
 
 interface BookingFormProps {
   roomId: string;
@@ -21,6 +23,7 @@ interface BookingFormProps {
 
 
 export const BookingForm = ({ roomId, checkIn, checkOut, currentBookingId, mode = 'new' }: BookingFormProps) => {
+    const TAX_RATE = 0.05; // 5%
     const router = useRouter();
     const { data: session } = useSession(); // Получаем данные сессии
 
@@ -37,7 +40,8 @@ export const BookingForm = ({ roomId, checkIn, checkOut, currentBookingId, mode 
     // Состояния для отправки формы
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
+    const [extraBreakfast, setExtraBreakfast] = useState(false);
+    const [extraTransfer, setExtraTransfer] = useState(false);
     // ✅ Загружаем данные о номере и автозаполняем форму
   useEffect(() => {
         const loadInitialData = async () => {
@@ -79,11 +83,33 @@ export const BookingForm = ({ roomId, checkIn, checkOut, currentBookingId, mode 
     }, [roomId, session]); 
 
     // Расчет стоимости
-    const { totalNights, totalPrice } = useMemo(() => {
-        if (!room) return { totalNights: 0, totalPrice: 0 };
+    const { totalNights, baseRoomPrice, breakfastCost, transferCost, taxes, totalPrice } = useMemo(() => {
+        if (!room) return { totalNights: 0, baseRoomPrice: 0, breakfastCost: 0, transferCost: 0, taxes: 0, totalPrice: 0 };
+        
         const nights = differenceInCalendarDays(new Date(checkOut), new Date(checkIn));
-        return { totalNights: nights > 0 ? nights : 0, totalPrice: nights > 0 ? nights * room.price : 0 };
-    }, [checkIn, checkOut, room]);
+        if (nights <= 0) return { totalNights: 0, baseRoomPrice: 0, breakfastCost: 0, transferCost: 0, taxes: 0, totalPrice: 0 };
+
+        const BREAKFAST_PRICE_PER_NIGHT = 1500;
+        const TRANSFER_PRICE = 3000;
+      
+
+        const roomPrice = nights * room.price;
+        const breakfastTotal = extraBreakfast ? BREAKFAST_PRICE_PER_NIGHT * nights : 0;
+        const transferTotal = extraTransfer ? TRANSFER_PRICE : 0;
+
+        const subtotal = roomPrice + breakfastTotal + transferTotal;
+        const taxAmount = subtotal * TAX_RATE;
+        const finalPrice = subtotal + taxAmount;
+
+        return {
+            totalNights: nights,
+            baseRoomPrice: roomPrice,
+            breakfastCost: breakfastTotal,
+            transferCost: transferTotal,
+            taxes: taxAmount,
+            totalPrice: finalPrice,
+        };
+    }, [checkIn, checkOut, room, extraBreakfast, extraTransfer]);
 
     // ✅ Валидация формы
  
@@ -174,6 +200,31 @@ export const BookingForm = ({ roomId, checkIn, checkOut, currentBookingId, mode 
                            <p><strong>Продолжительность:</strong> {totalNights} ночей</p>
                         </div>
                     </div>
+                    <div className="p-6 bg-white rounded-lg shadow">
+                            <h2 className="text-xl font-bold mb-4">Добавить к поездке</h2>
+                            <div className="space-y-4">
+                                <label htmlFor="extraBreakfast" className="flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors hover:bg-gray-50 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-400">
+                                    <div className="flex items-center">
+                                        <SunIcon className="h-6 w-6 text-yellow-500 mr-4"/>
+                                        <div>
+                                            <span className="font-semibold">Завтрак "шведский стол"</span>
+                                            <p className="text-sm text-gray-500">1,500 ₽ / ночь</p>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" id="extraBreakfast" checked={extraBreakfast} onChange={e => setExtraBreakfast(e.target.checked)} className="h-5 w-5 rounded text-black focus:ring-black"/>
+                                </label>
+                                <label htmlFor="extraTransfer" className="flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors hover:bg-gray-50 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-400">
+                                    <div className="flex items-center">
+                                        <PaperAirplaneIcon className="h-6 w-6 text-blue-500 mr-4 -rotate-45"/>
+                                        <div>
+                                            <span className="font-semibold">Трансфер из аэропорта</span>
+                                            <p className="text-sm text-gray-500">3,000 ₽</p>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" id="extraTransfer" checked={extraTransfer} onChange={e => setExtraTransfer(e.target.checked)} className="h-5 w-5 rounded text-black focus:ring-black"/>
+                                </label>
+                            </div>
+                        </div>
              
                     {/* ✅ ПОЛНОЦЕННАЯ ФОРМА */}
                     <div className="p-6 bg-white rounded-lg shadow">
@@ -222,11 +273,24 @@ export const BookingForm = ({ roomId, checkIn, checkOut, currentBookingId, mode 
                         {error && (
                             <p className="text-sm text-center text-red-600 my-4">{error}</p>
                         )}
-                        {/* Здесь могут быть налоги и сборы */}
-                        <p className="flex justify-between text-sm text-gray-500">
-                            <span>Налоги и сборы</span> 
-                            <span>Включены</span>
-                        </p>
+                        
+                            {/* ✅ NEW: Детализация дополнительных услуг */}
+                            {extraBreakfast && (
+                                <p className="flex justify-between text-gray-600 transition-opacity">
+                                    <span>Завтрак</span>
+                                    <span>+ {breakfastCost.toLocaleString('ru-RU')} ₽</span>
+                                </p>
+                            )}
+                            {extraTransfer && (
+                                <p className="flex justify-between text-gray-600 transition-opacity">
+                                    <span>Трансфер</span>
+                                    <span>+ {transferCost.toLocaleString('ru-RU')} ₽</span>
+                                </p>
+                            )}
+                            <p className="flex justify-between text-gray-600">
+                                <span>Налоги и сборы ({TAX_RATE * 100}%)</span> 
+                                <span>+ {taxes.toLocaleString('ru-RU', { minimumFractionDigits: 2 })} ₽</span>
+                            </p>
                      </div>
                      <hr className="my-4" />
                      <p className="flex justify-between font-bold text-lg">

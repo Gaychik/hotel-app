@@ -52,6 +52,7 @@ export interface Booking {
 export interface DayData {
   date: Date;
   price: number;
+  originalPrice?: number; // Оригинальная цена до скидки
   availability: 'free' | 'partial' | 'busy';
   discount?: number; // Процент скидки
   event?: string; // Название события, например "Фестиваль"

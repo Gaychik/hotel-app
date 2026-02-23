@@ -3,7 +3,7 @@
 import { roomsData} from '@/data/rooms';
 import type { Booking, Profile, Review } from '@/types';
 import { DayData } from '@/types';
-import { startOfMonth, endOfMonth, eachDayOfInterval, format, parseISO } from 'date-fns';
+import { startOfMonth, endOfMonth, eachDayOfInterval, format, parseISO, isSameDay } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import type { Room } from '@/types';
 
@@ -235,7 +235,14 @@ export const updateBooking = async (bookingId: string, newCheckIn: string, newCh
 //   }
 // };
 
-
+const getMockDayData = (date: Date) => {
+  const day = format(date, 'yyyy-MM-dd');
+  const prices: { [key: string]: { price: number; status: 'free' | 'partial' | 'busy' } } = {
+    '2026-03-17': { price: 7500, status: 'partial' },
+    '2026-03-18': { price: 9500, status: 'busy' },
+  };
+  return prices[day] || { price: 5000 + Math.floor(Math.random() * 1000), status: 'free' };
+};
 
 
 
@@ -251,27 +258,44 @@ export const getCalendarDataForMonth = async (month: Date): Promise<DayData[]> =
     // Генерируем 'фейковые' данные для каждого дня
     return daysInMonth.map(day => {
         const dayOfMonth = day.getDate();
-        let price = 12000;
+        let originalPrice = 12000; // Базовая цена
         let availability: DayData['availability'] = 'free';
+        let discount: number | undefined = undefined;
 
-        // Имитируем логику ценообразования и доступности
-        if (dayOfMonth > 10 && dayOfMonth < 15) { // 'Занятые' даты
-            price = 0;
+        // Имитируем логику ценообразования
+        if (dayOfMonth > 10 && dayOfMonth < 15) {
+            originalPrice = 0;
             availability = 'busy';
         } else if (dayOfMonth % 7 === 0 || dayOfMonth % 7 === 1) { // Выходные дороже
-            price = 18000;
-        } else if (dayOfMonth > 20 && dayOfMonth < 25) { // 'Частично занято'
-            price = 15000;
+            originalPrice = 18000;
+        } else if (dayOfMonth > 20 && dayOfMonth < 25) {
+            originalPrice = 15000;
             availability = 'partial';
         }
 
+        // ✅ НОВАЯ ЛОГИКА: Добавляем скидки
+        if ((dayOfMonth >= 1 && dayOfMonth <= 5) && availability === 'free') {
+            discount = 15; // Скидка 15% на первые 5 дней месяца
+        }
+        if ((dayOfMonth > 25) && availability === 'free') {
+            discount = 25; // "Горящее предложение" - скидка 25% в конце месяца
+        }
+        
+        // Считаем финальную цену
+        const finalPrice = discount 
+            ? originalPrice - (originalPrice * discount / 100)
+            : originalPrice;
+
         return {
             date: day,
-            price,
+            price: availability === 'busy' ? 0 : finalPrice,
+            originalPrice: discount ? originalPrice : undefined,
             availability,
+            discount,
         };
     });
 };
+
 
 // В будущем: fetch(\/api/rooms/available?checkIn=\&checkOut=\\)
 export const getAvailableRoomsByDates = async (checkIn: string, checkOut: string): Promise<Room[]> => {
@@ -378,4 +402,42 @@ export const getDisabledDates = async (): Promise<Date[]> => {
   );
 
   return uniqueDates;
+};
+
+export const findSmartSuggestions = async (targetDate: Date): Promise<{
+  nextAvailableSlot?: { from: Date, to: Date };
+  discountDates?: Date[];
+}> => {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // --- ЛОГИКА ПОИСКА БЛИЖАЙШИХ ДАТ (упрощенная) ---
+  // В реальном мире это был бы сложный запрос к БД
+  const nextAvailableDate = new Date(targetDate);
+  nextAvailableDate.setDate(targetDate.getDate() + 5); // Просто для примера сдвигаем на 5 дней
+  const nextSlot = {
+    from: nextAvailableDate,
+    to: new Date(nextAvailableDate.getTime() + 3 * 24 * 60 * 60 * 1000) // +3 дня
+  };
+
+  // --- ЛОГИКА ПОИСКА ДАТ СО СКИДКАМИ (упрощенная) ---
+  // Просто для примера вернем несколько дат в следующем месяце
+  const discountDates = [
+    new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 10),
+    new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 11),
+    new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 12),
+  ];
+
+  return { nextAvailableSlot: nextSlot, discountDates };
+};
+
+export const isRangeValid = (range: { from: Date; to: Date; }, disabledDates: Date[]): boolean => {
+  const daysInSelectedRange = eachDayOfInterval({ start: range.from, end: range.to });
+  
+  for (const day of daysInSelectedRange) {
+    if (disabledDates.some(disabledDate => isSameDay(day, disabledDate))) {
+      return false; // Нашли пересечение, диапазон невалиден!
+    }
+  }
+  
+  return true; // Пересечений не найдено.
 };
