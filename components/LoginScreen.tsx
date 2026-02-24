@@ -1,3 +1,4 @@
+// components/LoginScreen.tsx
 'use client'
 
 import React, { useState, useRef, ChangeEvent } from 'react';
@@ -35,11 +36,37 @@ const LoginScreen: React.FC = () => {
         setStep('codeInput');
     };
 
-    // --- Логика для входа через VK ---
-    const handleVkLogin = () => {
-        // Мы используем window.location.href, потому что переходим на ВНЕШНИЙ АДРЕС (наш бэкенд),
-        // а не на другую страницу внутри нашего Next.js приложения. useRouter() для этого не предназначен.
-        window.location.href = `${BACKEND_URL}/auth/vk/login`;
+   // --- ✅ ОБНОВЛЕННАЯ ЛОГИКА ДЛЯ ВХОДА ЧЕРЕЗ VK ---
+    const handleVkLogin = async () => {
+        setIsLoading(true); // Показываем пользователю, что процесс начался
+        setError('');
+
+        try {
+            // 1. Делаем GET-запрос к вашему бэкенду, чтобы получить URL и токен для обмена
+            const response = await fetch(`${BACKEND_URL}/auth/oauth/vk`); // Уточните этот URL у бэкенд-разработчика
+            
+            if (!response.ok) {
+                throw new Error('Не удалось начать процесс аутентификации.');
+            }
+
+            const { authorization_url, exchange_token } = await response.json();
+
+            if (!authorization_url || !exchange_token) {
+                 throw new Error('Бэкенд вернул некорректный ответ.');
+            }
+
+            // 2. Сохраняем exchange_token в sessionStorage.
+            // sessionStorage - идеальное место, т.к. токен нужен только на время этой одной сессии в браузере.
+            sessionStorage.setItem('vk_exchange_token', exchange_token);
+
+            // 3. Перенаправляем пользователя на страницу авторизации VK.
+            window.location.href = authorization_url;
+
+        } catch (err: any) {
+            console.error("Ошибка при старте VK-аутентификации:", err);
+            setError(err.message || 'Произошла ошибка. Попробуйте снова.');
+            setIsLoading(false);
+        }
     };
 
     // --- Шаг 2: Пользователь вводит код и нажимает "Подтвердить" ---
@@ -142,10 +169,11 @@ const LoginScreen: React.FC = () => {
                             <button 
                                 type="button" 
                                 onClick={handleVkLogin} 
+                                disabled={isLoading}
                                 className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
                                 aria-label="Войти через ВКонтакте"
                             >
-                                <VkIcon className="h-6 w-6" />
+                                {isLoading ? <div className="h-5 w-5 animate-spin rounded-full border-2 border-t-transparent border-gray-600" /> : <VkIcon className="h-6 w-6" />}
                             </button>
                         </div>
                     </form>

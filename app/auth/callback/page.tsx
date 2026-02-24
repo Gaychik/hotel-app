@@ -1,59 +1,86 @@
-// app/auth/callback/page.tsx
+// app/auth/vk-callback/page.tsx
+
 'use client';
 
-import { useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 
-// Обертка для Suspense, т.к. useSearchParams этого требует
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
 const CallbackContent = () => {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const token = searchParams.get('token'); // Ловим токен из URL
-    const error = searchParams.get('error');
 
     useEffect(() => {
-        // Если бэкенд вернул ошибку
-        if (error) {
-            console.error("Ошибка авторизации от бэкенда:", error);
-            router.push('/login?error=OAuthFailed');
-            return;
-        }
+        // Эта функция выполнится один раз при загрузке страницы
+        const completeVkAuth = async () => {
+            // 1. Получаем exchange_token, который мы сохранили ранее
+            const exchangeToken = sessionStorage.getItem('vk_exchange_token');
 
-        // Если есть токен, пытаемся войти с ним
-        if (token) {
-            // Вызываем signIn с нашим кастомным JWT-провайдером
-            signIn('jwt-provider', {
-                token,
-                redirect: false, // Мы сами управляем редиректом
-            }).then(result => {
+            if (!exchangeToken) {
+                // Если токена нет, значит что-то пошло не так. Отправляем на страницу логина.
+                router.push('/login?error=ExchangeFailed');
+                return;
+            }
+
+            // Сразу удаляем токен, он одноразовый
+            sessionStorage.removeItem('vk_exchange_token');
+
+            try {
+                // 2. Отправляем POST-запрос на вторую ручку бэкенда
+                const response = await fetch(`${BACKEND_URL}/auth/oauth/vk/exchange`, { // Уточните URL у бэкенд-разработчика
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ exchange_token: exchangeToken }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка обмена токена на стороне бэкенда.');
+                }
+                
+                const { access_token } = await response.json();
+
+                if (!access_token) {
+                    throw new Error('Бэкенд не вернул access_token.');
+                }
+
+                // 3. Используем полученный access_token (JWT) для входа через next-auth
+                const result = await signIn('jwt-provider', {
+                    token: access_token,
+                    redirect: false, // Мы сами управляем редиректом
+                });
+
                 if (result?.ok) {
-                    // Успех! Перенаправляем в профиль.
+                    // Успех! Перенаправляем в личный кабинет.
                     router.push('/profile');
                 } else {
-                    // Если next-auth не принял токен
-                    router.push('/login?error=InvalidToken');
+                    throw new Error(result?.error || 'Next-Auth не смог авторизовать токен.');
                 }
-            });
-        } else {
-            // Если зашли на страницу без токена
-            router.push('/login');
-        }
-    }, [token, error, router]);
+
+            } catch (error: any) {
+                console.error("Финальная ошибка VK-аутентификации:", error);
+                router.push(`/login?error=${error.message || 'AuthFailed'}`);
+            }
+        };
+
+        completeVkAuth();
+    }, [router]);
 
     // Пока идет процесс, показываем заглушку
     return (
         <div className="flex h-screen w-full items-center justify-center">
-            <p className="text-lg animate-pulse">Аутентификация...</p>
+            <div className="flex flex-col items-center gap-4">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-t-transparent border-gray-800" />
+                <p className="text-lg text-gray-600">Завершаем аутентификацию...</p>
+            </div>
         </div>
     );
 };
 
-
-// Экспортируем страницу
-import { Suspense } from 'react';
-
-export default function AuthCallbackPage() {
+// Экспортируем страницу с Suspense
+export default function VkCallbackPage() {
     return (
         <Suspense fallback={<div className="flex h-screen w-full items-center justify-center">Загрузка...</div>}>
             <CallbackContent />
