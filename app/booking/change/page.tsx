@@ -91,8 +91,7 @@ const ChangeBookingPage = () => {
       <BookingForm 
         roomId={room.id} 
         checkIn={checkIn || ''} 
-        checkOut={checkOut || ''} 
-        summaryPrice={totalPrice} 
+        checkOut={checkOut || ''}  
         currentBookingId={currentBookingId || ''}
         mode="change" 
       />

@@ -26,9 +26,6 @@ export const roomsData: Room[] = [
       bookedDates: [
         { start: '2026-03-15', end: '2026-03-20' },
         { start: '2026-03-25', end: '2026-03-30' }
-      ],
-      partialDates: [
-        { start: '2026-04-05', end: '2026-04-07' }
       ]
     }
   },
@@ -50,8 +47,7 @@ export const roomsData: Room[] = [
     availability: {
       bookedDates: [
         { start: '2026-03-10', end: '2026-03-12' }
-      ],
-      partialDates: []
+      ]
     }
   },
   {
@@ -72,9 +68,6 @@ export const roomsData: Room[] = [
     availability: {
       bookedDates: [
         { start: '2026-03-05', end: '2026-03-25' }
-      ],
-      partialDates: [
-        { start: '2026-04-10', end: '2026-04-15' }
       ]
     }
   }

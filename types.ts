@@ -25,10 +25,6 @@ export interface Room {
       end: string;   // формат 'YYYY-MM-DD'
     }[];
     // Массив частично забронированных периодов (например, когда частично забронированы удобства)
-    partialDates?: {
-      start: string; // формат 'YYYY-MM-DD'
-      end: string;   // формат 'YYYY-MM-DD'
-    }[];
   };
 }
 
