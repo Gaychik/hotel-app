@@ -9,7 +9,7 @@ import RoomsList from '@/components/RoomsList'; // ✅ Мы создадим э�
 const RoomsPage: React.FC = () => {
   return (
     <div className="bg-gray-100 min-h-screen">
-      <Header />
+      {/* <Header /> */}
       <main className="container mx-auto px-4 py-12 lg:px-20">
         {/* Suspense будет ждать, пока дочерний компонент не будет готов на клиенте */}
         <Suspense fallback={
