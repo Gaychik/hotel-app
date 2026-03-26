@@ -78,14 +78,19 @@ const Header: React.FC = () => {
                 onClick={() => setIsMenuOpen(false)}
             >
                 <div className="flex flex-col items-start space-y-6 p-6">
-                    <Link href="/favorites" className="flex items-center gap-3 text-lg font-medium text-gray-700 hover:text-blue-600 w-full">
-                        <HeartIcon />
-                        <span>Избранное</span>
-                    </Link>
-                    <Link href="/bookings" className="flex items-center gap-3 text-lg font-medium text-gray-700 hover:text-blue-600 w-full">
-                        <CalendarIcon className="w-6 h-6" />
-                        <span>Мои бронирования</span>
-                    </Link>
+                       {/* 👇 Показываем "Избранное" только для авторизованных пользователей */}
+                    {isLoggedIn && (
+                        <Link href="/favorites" className="flex items-center gap-3 text-lg font-medium text-gray-700 hover:text-blue-600 w-full">
+                            <HeartIcon />
+                            <span>Избранное</span>
+                        </Link>
+                    )}
+                   {isLoggedIn && (
+                        <Link href="/bookings" className="flex items-center gap-3 text-lg font-medium text-gray-700 hover:text-blue-600 w-full">
+                            <CalendarIcon className="w-6 h-6" />
+                            <span>Мои бронирования</span>
+                        </Link>
+                    )}
                     
                     {/* 👇 6. "Умная" ссылка для мобильного меню */}
                     <Link href={isLoggedIn ? "/profile" : "/login"} className="flex items-center gap-3 text-lg font-medium text-gray-700 hover:text-blue-600 w-full">

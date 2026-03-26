@@ -118,10 +118,10 @@ const HeroSection: React.FC = () => {
                         </div>
 
                         {/* --- 3. Правая часть: Кнопка "Найти номер" --- */}
-                        <div className="p-1 lg:p-0 lg:pl-1">
+                        <div className="lg:p-0 lg:pl-1 mt-2 lg:mt-0">
                              <button  onClick={goToRooms}
-                                // 👇 Кнопка теперь стилизована: скругленная, с тенью и "эмоциональным" ховером
-                                className="w-full h-full text-center font-semibold text-white bg-gray-800 rounded-xl shadow-lg transition-all duration-300 hover:bg-gray-900 hover:shadow-gray-900/40 transform hover:-translate-y-0.5 px-6"
+                                // 👇 Улучшенная кнопка: больше, удобнее для мобильных и более отзывчивая
+                                className="w-full py-4 lg:py-0 lg:h-full text-center font-bold text-white bg-gray-800 rounded-xl shadow-lg transition-all duration-200 hover:bg-gray-900 hover:shadow-gray-900/50 transform hover:-translate-y-1 active:scale-95 active:bg-gray-700 px-4 lg:px-6 text-base lg:text-lg"
                              >
                                  Найти номер
                              </button>
