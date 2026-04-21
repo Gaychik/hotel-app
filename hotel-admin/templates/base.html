@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}Admin - Hotel California{% endblock %}</title>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (те же что в основном приложении) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Karantina:wght@400&family=Istok+Web:wght@400&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                        karantina: ['Karantina', 'cursive'],
+                        'istok-web': ['Istok Web', 'sans-serif'],
+                        'source-serif-pro': ['Source Serif 4', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-gray-50 font-inter">
+    {% if current_user %}
+    <!-- Header (как в основном приложении) -->
+    <header class="bg-white shadow-lg sticky top-0 z-50 border-b-2 border-gray-800">
+        <div class="container mx-auto px-4 lg:px-20 h-20 grid grid-cols-3 items-center">
+            <!-- Левая колонка -->
+            <div class="justify-self-start">
+                <a href="/admin/dashboard" class="font-karantina text-2xl font-bold text-gray-800 hover:text-gray-600 transition-colors">HC Admin</a>
+                <div class="font-istok-web text-xs text-gray-500">Hotel California</div>
+            </div>
+            
+            <!-- Центральная навигация -->
+            <div class="justify-self-center">
+                <nav class="hidden lg:flex items-center space-x-1">
+                    <a href="/admin/dashboard" class="nav-link px-4 py-2 text-gray-700 hover:text-gray-900 transition-all duration-300 font-medium relative group">
+                        Дашборд
+                        <span class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gray-800 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <a href="/admin/rooms" class="nav-link px-4 py-2 text-gray-700 hover:text-gray-900 transition-all duration-300 font-medium relative group">
+                        Номера
+                        <span class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gray-800 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <a href="/admin/bookings" class="nav-link px-4 py-2 text-gray-700 hover:text-gray-900 transition-all duration-300 font-medium relative group">
+                        Бронирования
+                        <span class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gray-800 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <a href="/admin/discounts" class="nav-link px-4 py-2 text-gray-700 hover:text-gray-900 transition-all duration-300 font-medium relative group">
+                        Скидки
+                        <span class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gray-800 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <a href="/admin/users" class="nav-link px-4 py-2 text-gray-700 hover:text-gray-900 transition-all duration-300 font-medium relative group">
+                        Пользователи
+                        <span class="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gray-800 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- Правая колонка -->
+            <div class="justify-self-end flex items-center gap-4">
+                <span class="text-gray-700 text-sm hidden sm:block">Привет, Админ</span>
+                <a href="/admin/logout" class="bg-red-100 text-red-700 hover:bg-red-200 p-2 rounded-full transition-colors hover:scale-110 transform duration-200" title="Выйти">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Mobile Navigation - Bottom Bar -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-800 shadow-lg z-50 pb-safe">
+        <div class="grid grid-cols-5 h-16">
+            <a href="/admin/dashboard" class="mobile-nav-item flex flex-col items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span class="text-xs mt-1">Главная</span>
+            </a>
+            <a href="/admin/rooms" class="mobile-nav-item flex flex-col items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span class="text-xs mt-1">Номера</span>
+            </a>
+            <a href="/admin/bookings" class="mobile-nav-item flex flex-col items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span class="text-xs mt-1">Брони</span>
+            </a>
+            <a href="/admin/discounts" class="mobile-nav-item flex flex-col items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                <span class="text-xs mt-1">Скидки</span>
+            </a>
+            <a href="/admin/users" class="mobile-nav-item flex flex-col items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <span class="text-xs mt-1">Еще</span>
+            </a>
+        </div>
+    </nav>
+    
+    <div class="container mx-auto px-4 lg:px-20 py-8 pb-24 lg:pb-8">
+        {% block content %}{% endblock %}
+    </div>
+    {% else %}
+    {% block login_content %}{% endblock %}
+    {% endif %}
+    
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
