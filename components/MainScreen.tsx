@@ -9,12 +9,16 @@ import { Modal } from './ui/Modal';
 import { ReviewsList } from './ReviewsList';
 import { getReviews } from '@/lib/data';
 import type { Review } from '@/types';
+import { useSession } from 'next-auth/react';
 
 
 const MainScreen: React.FC = () => {
     const [showFavorites, setShowFavorites] = useState(false);
     const [isReviewsModalOpen, setIsReviewsModalOpen] = useState(false);
     const [reviews, setReviews] = useState<Review[]>([]);
+     // 👇 Получаем статус аутентификации
+    const { status } = useSession();
+    const isLoggedIn = status === 'authenticated';
       // Загружаем отзывы один раз при монтировании
    useEffect(() => {
     getReviews().then(setReviews);
@@ -23,7 +27,7 @@ const MainScreen: React.FC = () => {
         <div className='bg-gray-100 font-sans'>
             <Header />
             
-    
+     {isLoggedIn && (
             <div className='fixed top-1/2 right-4 transform -translate-y-1/2 z-40'>
                 <button
                     onClick={() => setShowFavorites(true)}
@@ -35,7 +39,7 @@ const MainScreen: React.FC = () => {
                     </svg>
                 </button>
             </div>
-            
+     )}
             <main>
                 <HeroSection />
                 <InfoSection onReviewsClick={() => setIsReviewsModalOpen(true)}/>
